@@ -1,0 +1,64 @@
+name: Bug report
+description: Something doesn't work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Please fill out every section so we can reproduce.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: '`npm ls prisma-extension-binary-uuid` output'
+      placeholder: 'e.g. prisma-extension-binary-uuid@1.0.0'
+    validations:
+      required: true
+
+  - type: input
+    id: prisma-version
+    attributes:
+      label: Prisma Client version
+      placeholder: 'e.g. @prisma/client@7.7.0'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: database
+    attributes:
+      label: Database
+      options:
+        - MySQL 5.7
+        - MySQL 8.0
+        - MySQL 8.4
+        - MariaDB 10.11
+        - MariaDB 11.x
+        - AWS Aurora MySQL
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Schema snippet + code that triggers the bug. Stripped to the smallest that reproduces.
+      render: typescript
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the full error (error code, model, field, operation if available).
+    validations:
+      required: true

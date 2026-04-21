@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      dev-deps:
+        patterns:
+          - '@typescript-eslint/*'
+          - 'eslint*'
+          - 'prettier'
+          - '@types/*'
+          - 'vitest'
+          - '@vitest/*'
+      prisma:
+        patterns:
+          - '@prisma/*'
+          - 'prisma'
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
