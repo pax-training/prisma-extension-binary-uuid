@@ -20,14 +20,15 @@
 declare const BinaryUuidBrand: unique symbol;
 
 /**
- * A branded string that also satisfies `Uint8Array` at the type level.
- * Intended as a drop-in for Prisma's generated `Bytes` input type, so
+ * A branded string that also satisfies `Uint8Array<ArrayBuffer>` at the type
+ * level. Intended as a drop-in for Prisma's generated `Bytes` input type, so
  * consumers can write `{ id: uuidString(x) }` in `where` / `data` clauses.
  *
  * At runtime this is a plain string. The extension's arg walker converts it
  * to a real `Uint8Array` before the query reaches the database driver.
  */
-export type UuidString = string & Uint8Array & { readonly [BinaryUuidBrand]: true };
+export type UuidString = string &
+  Uint8Array<ArrayBuffer> & { readonly [BinaryUuidBrand]: true };
 
 /**
  * Wrap a UUID string so TypeScript accepts it where Prisma expects `Uint8Array`.
