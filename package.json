@@ -100,11 +100,11 @@
     "@prisma/adapter-mariadb": "^7.4.0",
     "@prisma/client": "^7.4.0",
     "@size-limit/preset-small-lib": "^11.1.6",
-    "@types/node": "^22.19.10",
+    "@types/node": "^25.6.0",
     "@typescript-eslint/eslint-plugin": "^8.16.0",
     "@typescript-eslint/parser": "^8.16.0",
-    "@vitest/coverage-v8": "^2.1.8",
-    "eslint": "^9.15.0",
+    "@vitest/coverage-v8": "^4.1.5",
+    "eslint": "^10.2.1",
     "eslint-plugin-import": "^2.31.0",
     "fast-check": "^3.23.1",
     "mariadb": "^3.5.2",
@@ -116,7 +116,7 @@
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3",
-    "vitest": "^2.1.8"
+    "vitest": "^4.1.5"
   },
   "packageManager": "pnpm@10.0.0",
   "pnpm": {
