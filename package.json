@@ -112,7 +112,7 @@
     "prettier": "^3.4.2",
     "prisma": "^7.4.0",
     "size-limit": "^11.1.6",
-    "testcontainers": "^10.14.0",
+    "testcontainers": "^11.14.0",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3",
