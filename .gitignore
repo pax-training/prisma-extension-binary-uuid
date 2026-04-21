@@ -1,0 +1,36 @@
+node_modules
+dist
+coverage
+*.tsbuildinfo
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editor
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Testcontainers leftovers
+.testcontainers
+
+# Changesets
+# (we commit .changeset/ — only ignore generated files if any)
+
+# Benchmark output
+test/benchmark/results/
+test/benchmark/baseline.tmp.json
+
+# Matrix output
+test/matrix/results/

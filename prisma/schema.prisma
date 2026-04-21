@@ -1,0 +1,15 @@
+// Minimal schema used at extension-development time to generate the Prisma
+// Client stub so TypeScript can resolve the `Prisma` namespace + type utilities
+// (e.g., `Prisma.defineExtension`). This schema is NOT shipped — consumers of
+// the extension have their own schema.prisma.
+//
+// This schema intentionally lists no models. The extension API types come from
+// the Prisma Client runtime, which is generated from any valid schema.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}

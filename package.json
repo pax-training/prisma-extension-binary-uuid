@@ -1,0 +1,140 @@
+{
+  "name": "prisma-extension-binary-uuid",
+  "version": "1.0.0-rc.0",
+  "description": "Transparent BINARY(16) UUID storage for Prisma + MySQL / MariaDB. Keeps string IDs in your application code while cutting storage and index size in half at the database layer.",
+  "keywords": [
+    "prisma",
+    "prisma-client-extension",
+    "prisma-extension",
+    "uuid",
+    "binary-uuid",
+    "binary(16)",
+    "mysql",
+    "mariadb",
+    "aurora",
+    "storage-optimization",
+    "index-performance"
+  ],
+  "homepage": "https://github.com/pax-training/prisma-extension-binary-uuid",
+  "bugs": {
+    "url": "https://github.com/pax-training/prisma-extension-binary-uuid/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pax-training/prisma-extension-binary-uuid.git"
+  },
+  "license": "Apache-2.0",
+  "author": {
+    "name": "PAX Training LLC",
+    "email": "james@paxtraining.com",
+    "url": "https://github.com/pax-training"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "import": "./dist/cli/index.js",
+      "require": "./dist/cli/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "prisma-extension-binary-uuid": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "clean": "rm -rf dist coverage .tsbuildinfo",
+    "dev": "tsup --watch",
+    "lint": "eslint src test cli --max-warnings 0",
+    "lint:fix": "eslint src test cli --fix",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run test/unit",
+    "test:property": "vitest run test/property",
+    "test:integration": "vitest run test/integration --config vitest.integration.config.ts",
+    "test:integration:mysql8": "TEST_DB_IMAGE=mysql:8.0 vitest run test/integration --config vitest.integration.config.ts",
+    "test:integration:mysql57": "TEST_DB_IMAGE=mysql:5.7 vitest run test/integration --config vitest.integration.config.ts",
+    "test:integration:mariadb": "TEST_DB_IMAGE=mariadb:11 vitest run test/integration --config vitest.integration.config.ts",
+    "test:matrix": "tsx test/matrix/run-matrix.ts",
+    "test:fuzz": "tsx test/fuzz/run-fuzz.ts",
+    "test:coverage": "vitest run --coverage",
+    "bench": "vitest bench test/benchmark",
+    "bench:baseline": "tsx test/benchmark/capture-baseline.ts",
+    "size": "size-limit",
+    "prepublishOnly": "pnpm run clean && pnpm run build && pnpm run typecheck && pnpm run test:unit",
+    "release": "changeset publish",
+    "changeset": "changeset"
+  },
+  "peerDependencies": {
+    "@prisma/client": ">=5.0.0 <8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@prisma/client": {
+      "optional": false
+    }
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.10",
+    "@prisma/adapter-mariadb": "^7.4.0",
+    "@prisma/client": "^7.4.0",
+    "@size-limit/preset-small-lib": "^11.1.6",
+    "@types/node": "^22.19.10",
+    "@typescript-eslint/eslint-plugin": "^8.16.0",
+    "@typescript-eslint/parser": "^8.16.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.15.0",
+    "eslint-plugin-import": "^2.31.0",
+    "fast-check": "^3.23.1",
+    "mitata": "^1.0.16",
+    "prettier": "^3.4.2",
+    "prisma": "^7.4.0",
+    "size-limit": "^11.1.6",
+    "testcontainers": "^10.14.0",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "prisma",
+      "esbuild"
+    ]
+  },
+  "size-limit": [
+    {
+      "name": "core (ESM)",
+      "path": "dist/index.js",
+      "limit": "15 KB"
+    },
+    {
+      "name": "core (CJS)",
+      "path": "dist/index.cjs",
+      "limit": "15 KB"
+    }
+  ]
+}
