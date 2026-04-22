@@ -49,3 +49,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
+
+      # After a successful publish, hand the package's write access to the
+      # `pax-training:developers` team so the org owns the package, not just
+      # the publishing user. Idempotent — already-granted teams are no-ops.
+      # We use `npm access` rather than `npm owner` because `npm owner` is
+      # deprecated and the access-grant flow is the modern path.
+      - name: Grant org team write access (idempotent)
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          npm access grant read-write pax-training:developers prisma-extension-binary-uuid
+          echo "--- post-grant access list ---"
+          npm access list collaborators prisma-extension-binary-uuid
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
