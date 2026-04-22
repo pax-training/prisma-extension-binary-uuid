@@ -39,12 +39,19 @@ pnpm add prisma-extension-binary-uuid
 
 ```prisma
 model User {
-  id        Bytes  @id @default(dbgenerated("(UUID_TO_BIN(UUID(), 1))")) @db.Binary(16)
-  email     String @unique @db.VarChar(255)
-  companyId Bytes? @db.Binary(16)
+  id        Bytes    @id @default(dbgenerated("(UUID_TO_BIN(UUID(), 1))")) @db.Binary(16)
+  email     String   @unique @db.VarChar(255)
+  companyId Bytes?   @db.Binary(16)
   company   Company? @relation(fields: [companyId], references: [id])
 }
 ```
+
+> **MariaDB note:** `UUID_TO_BIN` is MySQL-only. For MariaDB, use the
+> portable form `dbgenerated("(UNHEX(REPLACE(UUID(),'-','')))")` instead —
+> it works on both servers but loses MySQL's bit-swap optimization for
+> primary-key clustering. If you want the bit-swap on MariaDB, omit the
+> `dbgenerated` default and let the extension's `autoGenerate` path fill in
+> a UUIDv7 (timestamp-ordered) at the application layer.
 
 **2. Generate the UUID field registry** (one-time, or re-run when schema changes):
 

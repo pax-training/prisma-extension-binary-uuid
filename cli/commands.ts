@@ -7,7 +7,7 @@ import { dirname, resolve } from 'node:path';
 
 import { buildRegistry } from './build-registry.js';
 import { emitConfig } from './emit-config.js';
-import { emitMigrationSql } from './emit-migration-sql.js';
+import { emitMigrationSql, type SqlDialect } from './emit-migration-sql.js';
 import { parseSchema } from './parse-schema.js';
 
 export interface InitOptions {
@@ -92,6 +92,7 @@ export interface MigrateSqlOptions {
   readonly schema: string;
   readonly output: string | undefined;
   readonly swapFlag?: 0 | 1;
+  readonly dialect?: SqlDialect;
 }
 
 export function runMigrateSql(options: MigrateSqlOptions): number {
@@ -103,10 +104,10 @@ export function runMigrateSql(options: MigrateSqlOptions): number {
 
   const source = readFileSync(schemaPath, 'utf8');
   const parsed = parseSchema(source);
-  const sql = emitMigrationSql(
-    parsed,
-    options.swapFlag !== undefined ? { swapFlag: options.swapFlag } : {},
-  );
+  const emitOptions: { swapFlag?: 0 | 1; dialect?: SqlDialect } = {};
+  if (options.swapFlag !== undefined) emitOptions.swapFlag = options.swapFlag;
+  if (options.dialect !== undefined) emitOptions.dialect = options.dialect;
+  const sql = emitMigrationSql(parsed, emitOptions);
 
   if (options.output !== undefined) {
     const outPath = resolve(options.output);

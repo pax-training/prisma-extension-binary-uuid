@@ -51,6 +51,12 @@ Apply this to:
 
 Leave non-UUID `String` fields alone.
 
+> **MariaDB:** swap `UUID_TO_BIN(UUID(), 1)` for the portable
+> `UNHEX(REPLACE(UUID(),'-',''))`. MariaDB has no `UUID_TO_BIN`, and the
+> portable form works on both servers (without the bit-swap optimization
+> — the extension's `autoGenerate` UUIDv7 path gives equivalent ordering
+> without a server-side function call).
+
 ## Step 4 — Emit migration SQL
 
 ```bash
@@ -140,11 +146,12 @@ BINARY(16), uninstall the extension, and use `Bytes` types directly in your
 Prisma code. This is more painful than using the extension but keeps you
 running.
 
-## Performance tip — `UUID_TO_BIN(uuid, 1)` with swap flag
+## Performance tip — `UUID_TO_BIN(uuid, 1)` with swap flag (MySQL only)
 
-The swap flag reorders the bytes for better B-tree index locality when your
-UUIDs are timestamp-ordered (v1 or v7). It's on by default in our
-`migrate-sql` output and in the recommended `@default(dbgenerated(...))`.
+MySQL's `UUID_TO_BIN(uuid, swap)` reorders the bytes for better B-tree
+index locality when your UUIDs are timestamp-ordered (v1 or v7). It's on
+by default in our `migrate-sql` output and in the recommended
+`@default(dbgenerated(...))`.
 
 If you're writing your own SQL, pass `1` as the second argument:
 
@@ -153,3 +160,9 @@ UUID_TO_BIN('550e8400-e29b-41d4-a716-446655440000', 1)
 ```
 
 For strictly random (v4) UUIDs, the swap flag has no benefit but no harm.
+
+MariaDB has no equivalent function. Use the extension's UUIDv7 generator
+(`version: 'v7'` in your config) instead — UUIDv7 puts the timestamp at
+the front of the byte string by spec, giving you the same B-tree locality
+without a server-side function call. See `docs/edge-cases.md` for the
+trade-off.

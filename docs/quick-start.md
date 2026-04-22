@@ -30,9 +30,17 @@ Change every UUID column from `CHAR(36)` / `VarChar(36)` to `Binary(16)`:
 ```
 
 The `@default(dbgenerated("(UUID_TO_BIN(UUID(), 1))"))` lets the database
-auto-generate IDs on insert. If you prefer application-generated IDs, omit
-the default — the extension's auto-gen path kicks in based on your
-`autoGenerate` config.
+auto-generate IDs on insert. The `, 1` flag swaps the time-low and
+time-high parts of the UUID so that consecutive UUIDs sort by timestamp,
+which keeps InnoDB B-tree inserts append-mostly instead of randomly-
+located. If you prefer application-generated IDs (or you're on MariaDB —
+see note below), omit the default and the extension's `autoGenerate` path
+fills in IDs.
+
+> **MariaDB:** `UUID_TO_BIN` is a MySQL function. On MariaDB use either the
+> portable form `dbgenerated("(UNHEX(REPLACE(UUID(),'-','')))")` (works,
+> but no bit-swap) or omit the default entirely and rely on the extension's
+> UUIDv7 generator (timestamp-ordered, no DB-side function call).
 
 ## Step 2 — Generate the UUID field registry
 

@@ -160,11 +160,16 @@ export function formatNs(ns: number): string {
   return `${(ns / 1_000_000).toFixed(2)} ms`;
 }
 
-export const BASELINE_PATH = join(
-  dirname(fileURLToPath(import.meta.url)),
-  'baselines',
-  'walker-overhead.baseline.json',
-);
+export function baselinePathForPlatform(platform: string): string {
+  return join(
+    dirname(fileURLToPath(import.meta.url)),
+    'baselines',
+    `walker-overhead.${platform}.json`,
+  );
+}
+
+export const CURRENT_PLATFORM = `${process.platform}-${process.arch}`;
+export const BASELINE_PATH = baselinePathForPlatform(CURRENT_PLATFORM);
 
 async function main(): Promise<void> {
   const baseline = await captureBaseline();

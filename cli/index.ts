@@ -53,9 +53,11 @@ Commands:
 
   migrate-sql  Emit DBA-grade migration SQL to convert CHAR(36) → BINARY(16)
                Options:
-                 --schema <path>   path to schema.prisma (default: ./prisma/schema.prisma)
-                 --output <path>   output path (default: stdout)
-                 --swap-flag 0|1   UUID_TO_BIN swap flag (default: 1)
+                 --schema <path>        path to schema.prisma (default: ./prisma/schema.prisma)
+                 --output <path>        output path (default: stdout)
+                 --dialect mysql|mariadb  SQL dialect (default: mysql; mariadb emits
+                                        UNHEX(REPLACE(col,'-','')) instead of UUID_TO_BIN)
+                 --swap-flag 0|1        UUID_TO_BIN swap flag (default: 1; ignored on mariadb)
 
   help         Show this message
 `,
@@ -80,10 +82,21 @@ async function main(): Promise<number> {
     case 'migrate-sql': {
       const swap = flags['swap-flag'];
       const swapFlag = swap === '0' ? 0 : swap === '1' ? 1 : undefined;
+      const dialectRaw = flags['dialect'];
+      let dialect: 'mysql' | 'mariadb' | undefined;
+      if (dialectRaw === 'mysql' || dialectRaw === 'mariadb') {
+        dialect = dialectRaw;
+      } else if (typeof dialectRaw === 'string') {
+        process.stderr.write(
+          `Error: --dialect must be 'mysql' or 'mariadb', got '${dialectRaw}'\n`,
+        );
+        return 1;
+      }
       return runMigrateSql({
         schema: (flags['schema'] as string | undefined) ?? './prisma/schema.prisma',
         output: flags['output'] as string | undefined,
         ...(swapFlag !== undefined ? { swapFlag } : {}),
+        ...(dialect !== undefined ? { dialect } : {}),
       });
     }
     case 'help':

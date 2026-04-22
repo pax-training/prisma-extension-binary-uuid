@@ -12,9 +12,16 @@
  *   REGRESSION_THRESHOLD=0.10 pnpm bench:check
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 
-import { BASELINE_PATH, captureBaseline, formatNs, type Baseline } from './capture-baseline.js';
+import {
+  BASELINE_PATH,
+  CURRENT_PLATFORM,
+  captureBaseline,
+  formatNs,
+  type Baseline,
+} from './capture-baseline.js';
 
 const DEFAULT_THRESHOLD = 0.25;
 
@@ -28,12 +35,8 @@ function parseThreshold(): number {
   return parsed;
 }
 
-function loadBaseline(): Baseline {
-  if (!existsSync(BASELINE_PATH)) {
-    throw new Error(
-      `baseline file not found at ${BASELINE_PATH} — run "pnpm bench:baseline" and commit the result first`,
-    );
-  }
+function loadBaseline(): Baseline | null {
+  if (!existsSync(BASELINE_PATH)) return null;
   const text = readFileSync(BASELINE_PATH, 'utf8');
   return JSON.parse(text) as Baseline;
 }
@@ -49,6 +52,25 @@ interface RegressionRow {
 async function main(): Promise<void> {
   const threshold = parseThreshold();
   const baseline = loadBaseline();
+  if (baseline === null) {
+    // Platform-keyed baselines mean a new runner (e.g. first-time Linux CI
+    // after only a Mac baseline was committed) starts unarmed. Capture,
+    // write the file (so an artifact upload can surface it for commit),
+    // and exit 0 — this is first-run bootstrap, not a regression.
+    process.stderr.write(
+      `no committed baseline for platform "${CURRENT_PLATFORM}" — capturing one now for informational output.\n` +
+        `Commit test/benchmark/baselines/walker-overhead.${CURRENT_PLATFORM}.json to arm the gate on this platform.\n\n`,
+    );
+    const fresh = await captureBaseline();
+    mkdirSync(dirname(BASELINE_PATH), { recursive: true });
+    writeFileSync(BASELINE_PATH, `${JSON.stringify(fresh, null, 2)}\n`, 'utf8');
+    process.stdout.write(`bench numbers on ${CURRENT_PLATFORM} (written to ${BASELINE_PATH}):\n`);
+    for (const e of fresh.entries) {
+      process.stdout.write(`  ${e.name.padEnd(48)}  ${formatNs(e.meanNs)} mean\n`);
+    }
+    return;
+  }
+
   const baselineMap = new Map<string, number>();
   for (const e of baseline.entries) {
     baselineMap.set(e.name, e.meanNs);

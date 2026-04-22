@@ -44,11 +44,11 @@ TEST_DB_IMAGE=mysql:5.7 TEST_DB_PLATFORM=linux/amd64 pnpm test:integration
 
 ## Node runtime
 
-| Node          | Status |
-| ------------- | :----: |
-| 20.19+        |   ✅   |
-| 22.12+        |   ✅   |
-| 24            |   ✅   |
+| Node   | Status |
+| ------ | :----: |
+| 20.19+ |   ✅   |
+| 22.12+ |   ✅   |
+| 24     |   ✅   |
 
 Tracks Prisma 7's `engines` field (`^20.19 || ^22.12 || >=24`). Node 18 is
 not supported because Prisma 7's preinstall fails on it; users still on

@@ -10,8 +10,8 @@ generator client { provider = "prisma-client-js" }
 datasource db { provider = "mysql" }
 
 model User {
-  id    Bytes  @id @default(dbgenerated("(UUID_TO_BIN(UUID(), 1))")) @db.Binary(16)
-  email String @unique @db.VarChar(255)
+  id    Bytes   @id @default(dbgenerated("(UNHEX(REPLACE(UUID(),'-','')))")) @db.Binary(16)
+  email String  @unique @db.VarChar(255)
   name  String? @db.VarChar(255)
 }
 ```

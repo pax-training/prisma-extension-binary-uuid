@@ -184,6 +184,23 @@ describe('runMigrateSql', () => {
     expect(content).not.toContain('UUID_TO_BIN(`id`, 1)');
   });
 
+  test('emits MariaDB-portable SQL when --dialect mariadb', () => {
+    const out = join(workDir, 'migrate-mariadb.sql');
+    runMigrateSql({ schema: schemaPath, output: out, dialect: 'mariadb' });
+    const content = readFileSync(out, 'utf8');
+    expect(content).toContain("UNHEX(REPLACE(`id`, '-', ''))");
+    expect(content).not.toContain('UUID_TO_BIN');
+    expect(content).toContain('-- Dialect: mariadb');
+  });
+
+  test('emits MySQL SQL by default (backwards compat)', () => {
+    const out = join(workDir, 'migrate-default.sql');
+    runMigrateSql({ schema: schemaPath, output: out });
+    const content = readFileSync(out, 'utf8');
+    expect(content).toContain('UUID_TO_BIN(`id`, 1)');
+    expect(content).toContain('-- Dialect: mysql');
+  });
+
   test('exits 1 when the schema is missing', () => {
     const code = runMigrateSql({ schema: join(workDir, 'nope.prisma'), output: undefined });
     expect(code).toBe(1);

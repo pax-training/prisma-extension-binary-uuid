@@ -119,12 +119,14 @@ jobs:
     # property + extension-factory smoke tests against an installed copy of
     # each version.
     #
-    # We deliberately skip `prisma generate` here: the dev schema is targeted
-    # at Prisma 7 (no `datasource url` because we feed it via adapter at
-    # runtime) and Prisma 5 rejects that. The walker code never imports
-    # generated model delegates — it only uses `Prisma.defineExtension` and
-    # the `$allOperations` runtime hook, both of which are stable across
-    # Prisma 5 → 7. The smoke test exercises both surfaces explicitly.
+    # For Prisma 7 we run `prisma generate` against the dev schema because
+    # `@prisma/client`'s auto-loader resolves `.prisma/client/default` at
+    # import time. For Prisma 5/6 we generate against a minimal 5.x/6.x-
+    # compatible schema instead (the dev schema uses adapter-first
+    # conventions that 5/6 reject). The walker code never imports model
+    # delegates — it only uses `Prisma.defineExtension` and `$allOperations`,
+    # both stable across 5 → 7. The smoke test exercises both surfaces
+    # explicitly.
     name: Prisma compat (${{ matrix.prisma }})
     runs-on: ubuntu-latest
     strategy:
@@ -143,6 +145,19 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm add -D "@prisma/client@${{ matrix.prisma }}" "prisma@${{ matrix.prisma }}"
+      - name: Generate Prisma Client
+        # Prisma 5/6 require a `datasource url`; the committed dev schema uses
+        # adapter-only config (valid on 7, rejected by 5/6). Use a
+        # minimal-compatible schema for 5/6.
+        run: |
+          if [[ "${{ matrix.prisma }}" == 7.* ]]; then
+            pnpm prisma generate
+          else
+            cp prisma/schema.prisma prisma/schema.prisma.bak
+            cp test/compat/schema-5-6.prisma prisma/schema.prisma
+            pnpm prisma generate
+            mv prisma/schema.prisma.bak prisma/schema.prisma
+          fi
       - name: Unit + property tests
         run: |
           pnpm test:unit
@@ -182,3 +197,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma generate
       - run: pnpm bench:check
+      - name: Upload captured baseline (first run / for rebaselining)
+        # If there's no committed linux-x64 baseline yet, `bench:check` writes
+        # one as informational output. Upload it so a maintainer can download
+        # and commit it to arm the gate on this runner class.
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bench-baseline-${{ runner.os }}-${{ runner.arch }}
+          path: test/benchmark/baselines/walker-overhead.*.json
+          if-no-files-found: ignore
+          retention-days: 30

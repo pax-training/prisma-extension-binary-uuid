@@ -1,0 +1,21 @@
+// Minimal Prisma schema used ONLY by the `prisma-compat` CI job for
+// Prisma 5.x / 6.x. The committed `prisma/schema.prisma` targets Prisma 7
+// (adapter-first, no datasource `url`) which 5.x / 6.x reject at validation.
+//
+// This file exists so `prisma generate` can produce a `.prisma/client/default`
+// stub that `@prisma/client`'s auto-loader resolves at import time. The
+// walker code never imports the generated model delegates — it only uses
+// `Prisma.defineExtension` and `$allOperations`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Placeholder {
+  id String @id
+}
