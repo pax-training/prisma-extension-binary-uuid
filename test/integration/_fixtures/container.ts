@@ -23,6 +23,8 @@ import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import type * as MariaDb from 'mariadb';
+
 const DEFAULT_IMAGE = 'mysql:8.0';
 
 export interface TestDb {
@@ -202,7 +204,7 @@ async function waitForWireProtocol(
   timeoutMs: number,
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
-  const mariadb = (await import('mariadb')) as typeof import('mariadb');
+  const mariadb = (await import('mariadb')) as typeof MariaDb;
   let lastErr: unknown;
   while (Date.now() < deadline) {
     try {

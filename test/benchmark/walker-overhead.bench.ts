@@ -11,8 +11,8 @@
 
 import { bench, describe } from 'vitest';
 
-import { uidFromBin, uidToBin } from '../../src/conversion/index.js';
 import { normalizeConfig } from '../../src/config/define-config.js';
+import { uidFromBin, uidToBin } from '../../src/conversion/index.js';
 import { walkArgs } from '../../src/walker/args-walker.js';
 import { walkResult } from '../../src/walker/result-walker.js';
 
@@ -56,10 +56,7 @@ describe('walkArgs', () => {
       data: {
         email: 'a@b.c',
         posts: {
-          create: [
-            { title: 'A', author: { connect: { id: UUID } } },
-            { title: 'B' },
-          ],
+          create: [{ title: 'A', author: { connect: { id: UUID } } }, { title: 'B' }],
         },
       },
     });

@@ -88,15 +88,15 @@ describe('normalizeConfig validation', () => {
   });
 
   test('rejects missing fields', () => {
-    expect(() =>
-      normalizeConfig({} as unknown as Parameters<typeof normalizeConfig>[0]),
-    ).toThrow(InvalidConfigError);
+    expect(() => normalizeConfig({} as unknown as Parameters<typeof normalizeConfig>[0])).toThrow(
+      InvalidConfigError,
+    );
   });
 
   test('rejects non-array field list', () => {
-    expect(() =>
-      normalizeConfig({ fields: { User: 'id' as unknown as string[] } }),
-    ).toThrow(InvalidConfigError);
+    expect(() => normalizeConfig({ fields: { User: 'id' as unknown as string[] } })).toThrow(
+      InvalidConfigError,
+    );
   });
 
   test('rejects empty field list', () => {
@@ -108,9 +108,9 @@ describe('normalizeConfig validation', () => {
   });
 
   test('rejects non-string field', () => {
-    expect(() =>
-      normalizeConfig({ fields: { User: [42 as unknown as string] } }),
-    ).toThrow(InvalidConfigError);
+    expect(() => normalizeConfig({ fields: { User: [42 as unknown as string] } })).toThrow(
+      InvalidConfigError,
+    );
   });
 
   test('rejects empty-string field', () => {
@@ -145,5 +145,72 @@ describe('normalizeConfig validation', () => {
         relations: 'nope' as unknown as Record<string, Record<string, string>>,
       }),
     ).toThrow(InvalidConfigError);
+  });
+
+  test('rejects non-string field in autoGenerate list', () => {
+    expect(() =>
+      normalizeConfig({
+        fields: { User: ['id'] },
+        autoGenerate: { User: [42 as unknown as string] },
+      }),
+    ).toThrow(/non-string field name/);
+  });
+
+  test('rejects non-object inner relation map', () => {
+    expect(() =>
+      normalizeConfig({
+        fields: { User: ['id'], Post: ['id'] },
+        relations: {
+          User: 'nope' as unknown as Record<string, string>,
+        },
+      }),
+    ).toThrow(/must be a Record/);
+  });
+
+  test('rejects non-string relation target', () => {
+    expect(() =>
+      normalizeConfig({
+        fields: { User: ['id'] },
+        relations: {
+          User: { posts: 42 as unknown as string },
+        },
+      }),
+    ).toThrow(/target must be a non-empty string/);
+  });
+
+  test('rejects empty-string relation target', () => {
+    expect(() =>
+      normalizeConfig({
+        fields: { User: ['id'] },
+        relations: { User: { posts: '' } },
+      }),
+    ).toThrow(/target must be a non-empty string/);
+  });
+
+  test('rejects non-object options', () => {
+    expect(() =>
+      normalizeConfig({
+        fields: { User: ['id'] },
+        options: 'nope' as unknown as { strictValidation?: boolean },
+      }),
+    ).toThrow(/options must be an object/);
+  });
+
+  test('rejects non-object autoGenerate', () => {
+    expect(() =>
+      normalizeConfig({
+        fields: { User: ['id'] },
+        autoGenerate: 'nope' as unknown as Record<string, string[]>,
+      }),
+    ).toThrow(/autoGenerate must be a Record/);
+  });
+
+  test('rejects non-array autoGenerate field list', () => {
+    expect(() =>
+      normalizeConfig({
+        fields: { User: ['id'] },
+        autoGenerate: { User: 'nope' as unknown as string[] },
+      }),
+    ).toThrow(/must be an array/);
   });
 });

@@ -34,7 +34,9 @@ export function normalizeConfig(config: BinaryUuidConfig): NormalizedConfig {
     throw new InvalidConfigError('config must be an object');
   }
   if (typeof config.fields !== 'object' || config.fields === null) {
-    throw new InvalidConfigError('config.fields is required and must be a Record<string, string[]>');
+    throw new InvalidConfigError(
+      'config.fields is required and must be a Record<string, string[]>',
+    );
   }
 
   // Build the fields map (PascalCase model → Set<fieldName>).

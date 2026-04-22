@@ -61,8 +61,7 @@ import { createBinaryUuidExtension } from 'prisma-extension-binary-uuid';
 import { uuidConfig } from './uuid-config';
 
 const adapter = new PrismaMariaDb(process.env.DATABASE_URL!);
-export const prisma = new PrismaClient({ adapter })
-  .$extends(createBinaryUuidExtension(uuidConfig));
+export const prisma = new PrismaClient({ adapter }).$extends(createBinaryUuidExtension(uuidConfig));
 ```
 
 ## Step 4 — Query as usual

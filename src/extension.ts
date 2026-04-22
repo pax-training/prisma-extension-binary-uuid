@@ -18,8 +18,8 @@
 
 import { Prisma } from '@prisma/client';
 
-import type { BinaryUuidConfig } from './config/types.js';
 import { normalizeConfig } from './config/define-config.js';
+import type { BinaryUuidConfig } from './config/types.js';
 import { walkArgs } from './walker/args-walker.js';
 import { walkResult } from './walker/result-walker.js';
 
@@ -30,9 +30,7 @@ import { walkResult } from './walker/result-walker.js';
  * The version suffix lets us bump the marker if the extension's semantics
  * change in a way that old cached clients would get wrong.
  */
-export const BINARY_UUID_EXTENSION_MARKER = Symbol.for(
-  'prisma-extension-binary-uuid.v1',
-);
+export const BINARY_UUID_EXTENSION_MARKER = Symbol.for('prisma-extension-binary-uuid.v1');
 
 /**
  * Create a Prisma Client extension that transparently converts between string
@@ -58,7 +56,12 @@ export function createBinaryUuidExtension(config: BinaryUuidConfig) {
     query: (args: unknown) => Promise<unknown>;
   }
 
-  const handler = async ({ model, operation, args, query }: AllOperationsContext): Promise<unknown> => {
+  const handler = async ({
+    model,
+    operation,
+    args,
+    query,
+  }: AllOperationsContext): Promise<unknown> => {
     const modelKey = model;
     const startedAt = normalized.metrics?.onQuery !== undefined ? performance.now() : 0;
 
@@ -106,7 +109,9 @@ export function createBinaryUuidExtension(config: BinaryUuidConfig) {
         // schema in our dev-time stub is empty. See type comment above.
         $allOperations: handler as unknown as Parameters<
           typeof Prisma.defineExtension
-        >[0] extends infer _ ? never : never,
+        >[0] extends infer _
+          ? never
+          : never,
       },
     },
     client: {

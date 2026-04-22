@@ -6,12 +6,20 @@ Every option on the `BinaryUuidConfig` object.
 import { defineBinaryUuidConfig } from 'prisma-extension-binary-uuid';
 
 export const uuidConfig = defineBinaryUuidConfig({
-  fields: { /* ... */ },
-  autoGenerate: { /* ... */ },
-  relations: { /* ... */ },
+  fields: {
+    /* ... */
+  },
+  autoGenerate: {
+    /* ... */
+  },
+  relations: {
+    /* ... */
+  },
   version: 'v4',
   generate: undefined,
-  options: { /* ... */ },
+  options: {
+    /* ... */
+  },
 });
 ```
 
@@ -133,7 +141,7 @@ options: {
     onQuery: (info) => {
       // info: { model, operation, durationMs, argsConverted, resultConverted }
       otelTracer.record(info);
-    }
+    };
   }
 }
 ```

@@ -11,7 +11,10 @@
 
 import { spawnSync } from 'node:child_process';
 
-import { assertContainerRuntimeAvailable, CONTAINER_CLI } from '../integration/_fixtures/container.js';
+import {
+  assertContainerRuntimeAvailable,
+  CONTAINER_CLI,
+} from '../integration/_fixtures/container.js';
 
 import { DB_TARGETS, type DbTarget } from './db-versions.js';
 
@@ -33,7 +36,9 @@ function resolveTargets(argv: readonly string[]): readonly DbTarget[] {
   for (const label of requested) {
     const t = byLabel.get(label);
     if (t === undefined) {
-      process.stderr.write(`Unknown target: ${label}\nKnown: ${DB_TARGETS.map((x) => x.label).join(', ')}\n`);
+      process.stderr.write(
+        `Unknown target: ${label}\nKnown: ${DB_TARGETS.map((x) => x.label).join(', ')}\n`,
+      );
       process.exit(2);
     }
     out.push(t);
@@ -118,6 +123,8 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  process.stderr.write(`Matrix runner crashed: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.stderr.write(
+    `Matrix runner crashed: ${err instanceof Error ? err.message : String(err)}\n`,
+  );
   process.exit(1);
 });

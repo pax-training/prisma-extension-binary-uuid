@@ -26,9 +26,11 @@ afterAll(async () => {
 
 d('interactive transaction', () => {
   test('tx client has the extension applied — strings in, strings out', async () => {
-    const result = await (prisma as unknown as {
-      $transaction: <T>(fn: (tx: ExtendedClient) => Promise<T>) => Promise<T>;
-    }).$transaction(async (tx) => {
+    const result = await (
+      prisma as unknown as {
+        $transaction: <T>(fn: (tx: ExtendedClient) => Promise<T>) => Promise<T>;
+      }
+    ).$transaction(async (tx) => {
       const user = await tx.user.create({ data: { email: `itx-${Date.now()}@x.com` } });
       const post = await tx.post.create({
         data: { title: 'Tx post', authorId: user.id },
@@ -42,9 +44,11 @@ d('interactive transaction', () => {
   test('rolling back restores pre-tx state', async () => {
     const email = `rb-${Date.now()}@x.com`;
     await expect(
-      (prisma as unknown as {
-        $transaction: <T>(fn: (tx: ExtendedClient) => Promise<T>) => Promise<T>;
-      }).$transaction(async (tx) => {
+      (
+        prisma as unknown as {
+          $transaction: <T>(fn: (tx: ExtendedClient) => Promise<T>) => Promise<T>;
+        }
+      ).$transaction(async (tx) => {
         await tx.user.create({ data: { email } });
         throw new Error('rollback');
       }),
@@ -58,9 +62,11 @@ d('batch transaction', () => {
   test('array of promises all with extension applied', async () => {
     const email1 = `btx-a-${Date.now()}@x.com`;
     const email2 = `btx-b-${Date.now()}@x.com`;
-    const [u1, u2] = await (prisma as unknown as {
-      $transaction: (ops: unknown[]) => Promise<Array<{ id: string }>>;
-    }).$transaction([
+    const [u1, u2] = await (
+      prisma as unknown as {
+        $transaction: (ops: unknown[]) => Promise<Array<{ id: string }>>;
+      }
+    ).$transaction([
       prisma.user.create({ data: { email: email1 } }),
       prisma.user.create({ data: { email: email2 } }),
     ]);

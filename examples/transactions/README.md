@@ -40,9 +40,12 @@ Each promise in the array is intercepted individually before composition.
 Pass the isolation level as the second argument to `$transaction`:
 
 ```ts
-await prisma.$transaction(async (tx) => {
-  // ...
-}, { isolationLevel: 'Serializable' });
+await prisma.$transaction(
+  async (tx) => {
+    // ...
+  },
+  { isolationLevel: 'Serializable' },
+);
 ```
 
 The extension doesn't interact with the isolation level — it operates at
@@ -54,7 +57,10 @@ By default Prisma times transactions out at 5 seconds. For longer-running
 workflows, raise `maxWait` and `timeout`:
 
 ```ts
-await prisma.$transaction(async (tx) => {
-  // ...
-}, { maxWait: 10_000, timeout: 60_000 });
+await prisma.$transaction(
+  async (tx) => {
+    // ...
+  },
+  { maxWait: 10_000, timeout: 60_000 },
+);
 ```

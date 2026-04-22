@@ -27,8 +27,7 @@ declare const BinaryUuidBrand: unique symbol;
  * At runtime this is a plain string. The extension's arg walker converts it
  * to a real `Uint8Array` before the query reaches the database driver.
  */
-export type UuidString = string &
-  Uint8Array<ArrayBuffer> & { readonly [BinaryUuidBrand]: true };
+export type UuidString = string & Uint8Array<ArrayBuffer> & { readonly [BinaryUuidBrand]: true };
 
 /**
  * Wrap a UUID string so TypeScript accepts it where Prisma expects `Uint8Array`.

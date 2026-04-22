@@ -42,7 +42,9 @@ If different tenants have different UUID columns (e.g., some have custom
 fields that others don't), build a per-tenant config:
 
 ```ts
-const baseConfig = defineBinaryUuidConfig({ /* shared fields */ });
+const baseConfig = defineBinaryUuidConfig({
+  /* shared fields */
+});
 
 function buildTenantClient(tenantId: string, extraFields?: Record<string, string[]>) {
   const config = extraFields

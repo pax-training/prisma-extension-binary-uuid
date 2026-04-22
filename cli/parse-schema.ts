@@ -40,8 +40,7 @@ export interface ParsedSchema {
 }
 
 const MODEL_OPEN_RE = /^model\s+(\w+)\s*\{/;
-const FIELD_RE =
-  /^\s*(?<name>\w+)\s+(?<type>\w+)(?<modifier>\?|\[\])?\s*(?<attrs>.*)$/;
+const FIELD_RE = /^\s*(?<name>\w+)\s+(?<type>\w+)(?<modifier>\?|\[\])?\s*(?<attrs>.*)$/;
 const DB_TYPE_RE = /@db\.(\w+(?:\([^)]+\))?)/;
 const RELATION_RE = /@relation\b/;
 

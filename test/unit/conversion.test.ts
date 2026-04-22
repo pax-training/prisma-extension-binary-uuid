@@ -248,4 +248,41 @@ describe('newUidV7', () => {
     }
     expect(seen.size).toBe(10_000);
   });
+
+  test('within-ms counter overflow spins to next ms', async () => {
+    const { _resetV7StateForTesting } = await import('../../src/conversion/uuid-v7.js');
+    _resetV7StateForTesting();
+    const fixedMs = 1_700_000_000_000;
+    // First 4096 calls fit in the 12-bit counter; #4097 must roll forward.
+    for (let i = 0; i < 4096; i++) {
+      newUidV7(fixedMs);
+    }
+    const overflowed = newUidV7(fixedMs);
+    // Bytes 0-5 should encode fixedMs+1, not fixedMs.
+    expect(overflowed[5]).toBe((fixedMs + 1) & 0xff);
+  });
+
+  test('clock-went-backwards bumps lastMs by 1 instead of going backwards', async () => {
+    const { _resetV7StateForTesting } = await import('../../src/conversion/uuid-v7.js');
+    _resetV7StateForTesting();
+    const past = 1_700_000_000_000;
+    const future = past + 100;
+    newUidV7(future); // lastMs = future
+    const back = newUidV7(past); // ms < lastMs branch
+    // Should encode future + 1, not past.
+    expect(back[5]).toBe((future + 1) & 0xff);
+  });
+
+  test('_resetV7StateForTesting clears state so next call starts fresh', async () => {
+    const { _resetV7StateForTesting } = await import('../../src/conversion/uuid-v7.js');
+    const fixed = 1_700_000_001_000;
+    newUidV7(fixed);
+    newUidV7(fixed); // counter at 1
+    _resetV7StateForTesting();
+    const fresh = newUidV7(fixed);
+    // After reset, this call should land in the `ms > lastMs` branch (lastMs=0)
+    // and counter should be 0 — meaning bytes 6-7 encode counter 0.
+    expect(fresh[6]! & 0x0f).toBe(0); // top 4 bits of counter
+    expect(fresh[7]).toBe(0); // low 8 bits of counter
+  });
 });

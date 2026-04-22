@@ -2,19 +2,26 @@
 
 ## Overhead summary
 
-The walker's per-query overhead is negligible relative to DB I/O. Measured
-on an M-series Mac (results will vary but shapes are representative):
+The walker's per-query overhead is negligible relative to DB I/O. Numbers
+below are the committed baseline at
+`test/benchmark/baselines/walker-overhead.baseline.json`, captured on an
+Apple M2 Max under Node v25 with `mitata`. Re-capture with
+`pnpm bench:baseline`; CI fails any PR that regresses past 25% (configurable
+via `REGRESSION_THRESHOLD`).
 
-| Operation shape | Walker overhead |
-| --- | --- |
-| `findUnique` by id | ~1 µs |
-| `findMany` with `in: [10]` | ~3 µs |
-| `findMany` 1000 rows, 2 UUID fields each | ~2 ms |
-| `findMany` 100 rows × 5 nested posts | ~1 ms |
-| Nested create, 3 relation levels deep | ~10 µs |
+| Operation shape                            | Walker overhead (mean) | p99     |
+| ------------------------------------------ | ---------------------- | ------- |
+| `uidToBin` (single string → binary)        | 135 ns                 | 172 ns  |
+| `uidFromBin` (single binary → string)      | 114 ns                 | 165 ns  |
+| `walkArgs` `findUnique` by id              | 224 ns                 | 266 ns  |
+| `walkArgs` `findMany` with `in: [10]`      | 1.70 µs                | 1.78 µs |
+| `walkArgs` nested create, 3 levels deep    | 1.97 µs                | 2.07 µs |
+| `walkResult` `findUnique` (2 UUID fields)  | 452 ns                 | 507 ns  |
+| `walkResult` `findMany` 1000 rows × 2 ids  | 456 µs                 | 695 µs  |
+| `walkResult` `findMany` 100 rows × 5 posts | 281 µs                 | 463 µs  |
 
 A single DB round-trip is typically 1-10 ms even on a fast local network.
-Walker overhead is <1% of that in the worst case.
+Walker overhead is <1% of that in the worst case (1000-row findMany).
 
 ## Measuring in your app
 
@@ -40,15 +47,24 @@ createBinaryUuidExtension({
 
 ## Regression gate in CI
 
-Every PR runs the benchmark suite:
+Every PR runs:
 
 ```bash
-pnpm bench
+pnpm bench:check
 ```
 
-We fail the PR if any metric regresses >10% vs. the committed baseline in
-`test/benchmark/baselines/`. Intentional regressions require rebaselining
-in the same PR.
+This re-runs the suite via `mitata` (consistent harness, ~25s) and fails
+the PR if any benchmark's mean ns/op exceeds the committed baseline at
+`test/benchmark/baselines/walker-overhead.baseline.json` by more than 25%.
+Intentional regressions require running `pnpm bench:baseline` and
+committing the updated baseline in the same PR.
+
+The 25% threshold accounts for the variance that shared CI runners
+exhibit on microbenchmarks. To run a tighter gate locally:
+
+```bash
+REGRESSION_THRESHOLD=0.10 pnpm bench:check
+```
 
 ## Storage savings
 
@@ -73,8 +89,10 @@ latency improvements:
   smaller comparison cost per step)
 - **Range scans**: meaningful gain — more rows per page means fewer I/O
   operations for the same result set
-- **JOINs on UUID columns**: consistent 15–40% speedup in our internal
-  benchmarks against 1M+ row tables. Largest wins on multi-way joins.
+- **JOINs on UUID columns**: smaller PKs propagate into every secondary
+  index (InnoDB stores the PK as the leaf pointer), so multi-way joins on
+  UUID columns get the largest wins. Magnitude depends on row count, page
+  cache pressure, and join arity — measure your workload.
 
 ## When these wins matter
 

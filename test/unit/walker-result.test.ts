@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { uidToBin } from '../../src/conversion/index.js';
 import { normalizeConfig } from '../../src/config/define-config.js';
 import type { NormalizedConfig } from '../../src/config/types.js';
+import { uidToBin } from '../../src/conversion/index.js';
 import { walkResult } from '../../src/walker/result-walker.js';
 
 const UUID_A = '550e8400-e29b-41d4-a716-446655440000';
@@ -147,7 +147,11 @@ describe('nested relations', () => {
     const { result } = walk('Company', 'findUnique', input);
     const r = result as {
       id: string;
-      users: Array<{ id: string; companyId: string; posts: Array<{ id: string; authorId: string }> }>;
+      users: Array<{
+        id: string;
+        companyId: string;
+        posts: Array<{ id: string; authorId: string }>;
+      }>;
     };
     expect(r.id).toBe(UUID_A);
     expect(r.users[0]!.id).toBe(UUID_B);
@@ -191,5 +195,29 @@ describe('unknown model', () => {
     const { result, converted } = walk(undefined as unknown as string, 'findMany', input);
     expect(result).toBe(input);
     expect(converted).toBe(0);
+  });
+});
+
+describe('non-object root values', () => {
+  test('bare Uint8Array at root passes through (no field context)', () => {
+    const bare = uidToBin(UUID_A);
+    const { result, converted } = walk('User', 'aggregate', bare);
+    // Without a field context the walker can't tell if this byte string is a UUID.
+    expect(result).toBe(bare);
+    expect(converted).toBe(0);
+  });
+
+  test('bare scalar (string) at root passes through', () => {
+    const { result, converted } = walk('User', 'count', 42);
+    expect(result).toBe(42);
+    expect(converted).toBe(0);
+  });
+
+  test('UUID scalar list (array of bytes) on a UUID field converts each', () => {
+    // simulate scalar-list result where each element is a binary UUID
+    const list = [uidToBin(UUID_A), uidToBin(UUID_B)];
+    const { result, converted } = walk('User', 'findUnique', { id: list });
+    expect((result as { id: string[] }).id).toEqual([UUID_A, UUID_B]);
+    expect(converted).toBe(2);
   });
 });

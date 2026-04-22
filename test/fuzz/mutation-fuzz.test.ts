@@ -39,7 +39,22 @@ const arbitraryObject: fc.Arbitrary<Record<string, unknown>> = fc.letrec<{
   value: unknown;
 }>((tie) => ({
   obj: fc.dictionary(
-    fc.oneof(fc.constantFrom('id', 'companyId', 'authorId', 'name', 'email', 'AND', 'OR', 'NOT', 'in', 'equals', 'not'), fc.string()),
+    fc.oneof(
+      fc.constantFrom(
+        'id',
+        'companyId',
+        'authorId',
+        'name',
+        'email',
+        'AND',
+        'OR',
+        'NOT',
+        'in',
+        'equals',
+        'not',
+      ),
+      fc.string(),
+    ),
     tie('value'),
     { minKeys: 0, maxKeys: 5 },
   ),

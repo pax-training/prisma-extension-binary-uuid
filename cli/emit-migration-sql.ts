@@ -60,7 +60,9 @@ export function emitMigrationSql(schema: ParsedSchema, options: MigrationSqlOpti
         continue;
       }
       const nullable = field.isNullable ? ' NULL' : ' NOT NULL';
-      lines.push(`ALTER TABLE \`${tableName}\` ADD COLUMN \`${field.name}__bin\` BINARY(16)${nullable} AFTER \`${field.name}\`;`);
+      lines.push(
+        `ALTER TABLE \`${tableName}\` ADD COLUMN \`${field.name}__bin\` BINARY(16)${nullable} AFTER \`${field.name}\`;`,
+      );
       lines.push(
         `UPDATE \`${tableName}\` SET \`${field.name}__bin\` = UUID_TO_BIN(\`${field.name}\`, ${swapFlag}) WHERE \`${field.name}\` IS NOT NULL;`,
       );

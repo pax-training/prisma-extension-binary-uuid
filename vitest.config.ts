@@ -3,7 +3,13 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     include: ['test/unit/**/*.test.ts', 'test/property/**/*.test.ts'],
-    exclude: ['test/integration/**/*', 'test/benchmark/**/*', 'test/fuzz/**/*', 'node_modules', 'dist'],
+    exclude: [
+      'test/integration/**/*',
+      'test/benchmark/**/*',
+      'test/fuzz/**/*',
+      'node_modules',
+      'dist',
+    ],
     globals: false,
     environment: 'node',
     reporters: process.env.CI ? ['default', 'github-actions'] : ['default'],

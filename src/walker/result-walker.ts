@@ -7,9 +7,9 @@
  * trees rather than query args.
  */
 
+import type { NormalizedConfig } from '../config/types.js';
 import { uidFromBin } from '../conversion/uuid-binary.js';
 import { isUuidBytes } from '../conversion/validation.js';
-import type { NormalizedConfig } from '../config/types.js';
 
 import { AGGREGATION_RESULT_KEYS } from './operators.js';
 
@@ -81,9 +81,7 @@ function walkForModel(
     }
 
     if (transformed !== inner) {
-      if (out === undefined) {
-        out = { ...obj };
-      }
+      out ??= { ...obj };
       out[key] = transformed;
     }
   }
@@ -126,9 +124,7 @@ function walkAggregationResult(
     if (uuidFields?.has(key) === true) {
       const transformed = convertUuidResultValue(inner, counter);
       if (transformed !== inner) {
-        if (out === undefined) {
-          out = { ...obj };
-        }
+        out ??= { ...obj };
         out[key] = transformed;
       }
     }
@@ -145,9 +141,7 @@ function walkArray<T>(arr: readonly T[], fn: (v: T) => unknown): unknown {
   for (let i = 0; i < arr.length; i++) {
     const transformed = fn(arr[i]!);
     if (transformed !== arr[i]) {
-      if (out === undefined) {
-        out = arr.slice();
-      }
+      out ??= arr.slice();
       out[i] = transformed;
     }
   }

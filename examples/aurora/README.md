@@ -2,7 +2,7 @@
 
 The extension works against AWS Aurora MySQL (engine `aurora-mysql`,
 v8.0-compatible) with no extra configuration. The Aurora-specific concerns
-are about the *driver* + *connection*, not the extension.
+are about the _driver_ + _connection_, not the extension.
 
 ## Connection string
 
@@ -24,8 +24,9 @@ const writerClient = createClient(process.env.AURORA_WRITER_URL!);
 const readerClient = createClient(process.env.AURORA_READER_URL!);
 
 function createClient(url: string) {
-  return new PrismaClient({ adapter: new PrismaMariaDb(url) })
-    .$extends(createBinaryUuidExtension(uuidConfig));
+  return new PrismaClient({ adapter: new PrismaMariaDb(url) }).$extends(
+    createBinaryUuidExtension(uuidConfig),
+  );
 }
 ```
 
@@ -46,8 +47,9 @@ const signer = new Signer({
 const token = await signer.getAuthToken();
 const url = `mysql://iam-user:${encodeURIComponent(token)}@cluster.cluster-abc123.us-east-1.rds.amazonaws.com:3306/mydb?sslaccept=strict`;
 
-const prisma = new PrismaClient({ adapter: new PrismaMariaDb(url) })
-  .$extends(createBinaryUuidExtension(uuidConfig));
+const prisma = new PrismaClient({ adapter: new PrismaMariaDb(url) }).$extends(
+  createBinaryUuidExtension(uuidConfig),
+);
 ```
 
 Tokens expire after 15 minutes; rotate per request or wrap with a refresher.

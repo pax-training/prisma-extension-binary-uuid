@@ -14,12 +14,12 @@ File on the GitHub issue tracker using the [Bug report](https://github.com/pax-t
 This is a maintained open-source project, not a paid product. Best-effort
 SLAs for a single maintainer:
 
-| Severity | Description | Target initial response |
-| --- | --- | --- |
-| Critical | Data corruption, data leak | 48 hours |
-| High | Query failures, incorrect results | 1 week |
-| Medium | Docs gaps, ergonomic issues | Best effort |
-| Low | Nice-to-haves | Best effort |
+| Severity | Description                       | Target initial response |
+| -------- | --------------------------------- | ----------------------- |
+| Critical | Data corruption, data leak        | 48 hours                |
+| High     | Query failures, incorrect results | 1 week                  |
+| Medium   | Docs gaps, ergonomic issues       | Best effort             |
+| Low      | Nice-to-haves                     | Best effort             |
 
 ## Contract support
 

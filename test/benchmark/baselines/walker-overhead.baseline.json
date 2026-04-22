@@ -1,0 +1,47 @@
+{
+  "capturedAt": "2026-04-22T04:36:29.180Z",
+  "nodeVersion": "v25.8.2",
+  "platform": "darwin-arm64",
+  "entries": [
+    {
+      "name": "uidToBin (dashed)",
+      "meanNs": 135.3461641497208,
+      "p99Ns": 171.81396484363358
+    },
+    {
+      "name": "uidFromBin",
+      "meanNs": 113.59117888388398,
+      "p99Ns": 164.896484375
+    },
+    {
+      "name": "findUnique by id",
+      "meanNs": 223.9154761321941,
+      "p99Ns": 266.448974609375
+    },
+    {
+      "name": "findMany with in [10]",
+      "meanNs": 1704.6853681741302,
+      "p99Ns": 1777.6083984375
+    },
+    {
+      "name": "nested create 3 levels deep",
+      "meanNs": 1967.1914033085468,
+      "p99Ns": 2067.87109375
+    },
+    {
+      "name": "findUnique (single row, 2 UUID fields)",
+      "meanNs": 451.55834375000126,
+      "p99Ns": 506.693603515625
+    },
+    {
+      "name": "findMany 1000 rows, 2 UUID fields each",
+      "meanNs": 455840.23828125186,
+      "p99Ns": 695291
+    },
+    {
+      "name": "findMany 100 rows with 5 nested posts each",
+      "meanNs": 280501.6381447421,
+      "p99Ns": 463375
+    }
+  ]
+}

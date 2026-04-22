@@ -28,9 +28,9 @@ prisma.$extends({
         const raw = await query(transformed);
         // transform result after
         return transformResult(raw);
-      }
-    }
-  }
+      },
+    },
+  },
 });
 ```
 
@@ -118,16 +118,11 @@ The extension operates at the query level, not the type level. Prisma's
 generated types still show UUID fields as `Uint8Array` (because that's
 what the schema says they are).
 
-Two approaches for consumer type ergonomics:
-
-1. **`uuidString()` brand helper**: wraps a string in a branded type that
-   satisfies both `string` and `Uint8Array<ArrayBuffer>` at the type
-   level. Explicit, opt-in, minimal overhead. Documented as the default
-   recommendation.
-
-2. **Type-mapped wrapper client**: a higher-order function that returns a
-   client with UUID fields reshaped to `string` in input + output
-   positions. Complex generics; not shipped in v1.0 but planned for v2.
+**Approach: `uuidString()` brand helper.** Wraps a string in a branded type
+that satisfies both `string` and `Uint8Array<ArrayBuffer>` at the type
+level. Explicit, opt-in, minimal overhead. This is the recommended pattern
+for callers who want to silence Prisma's generated `Uint8Array` types
+without losing type safety on the underlying string.
 
 ## What the extension deliberately doesn't do
 

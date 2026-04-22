@@ -7,9 +7,9 @@
 
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { uidFromBin } from '../../src/conversion/index.js';
 import { normalizeConfig } from '../../src/config/define-config.js';
 import type { BinaryUuidConfig, NormalizedConfig } from '../../src/config/types.js';
+import { uidFromBin } from '../../src/conversion/index.js';
 import { MalformedUuidError, TypeMismatchError } from '../../src/errors.js';
 import { walkArgs } from '../../src/walker/args-walker.js';
 
@@ -115,7 +115,8 @@ describe('logical combinators', () => {
     const { args } = walk('User', 'findMany', {
       where: { AND: [{ id: UUID_A }, { companyId: UUID_B }] },
     });
-    const and = (args as { where: { AND: Array<{ id?: Uint8Array; companyId?: Uint8Array }> } }).where.AND;
+    const and = (args as { where: { AND: Array<{ id?: Uint8Array; companyId?: Uint8Array }> } })
+      .where.AND;
     expect(and[0]!.id).toBeInstanceOf(Uint8Array);
     expect(and[1]!.companyId).toBeInstanceOf(Uint8Array);
   });
@@ -143,11 +144,13 @@ describe('logical combinators', () => {
     });
     expect(converted).toBe(1);
     // Navigate: AND[0].OR[0].NOT.AND[0].id
-    const and = (args as {
-      where: {
-        AND: Array<{ OR: Array<{ NOT: { AND: Array<{ id: Uint8Array }> } }> }>;
-      };
-    }).where.AND;
+    const and = (
+      args as {
+        where: {
+          AND: Array<{ OR: Array<{ NOT: { AND: Array<{ id: Uint8Array }> } }> }>;
+        };
+      }
+    ).where.AND;
     const id = and[0]!.OR[0]!.NOT.AND[0]!.id;
     expect(id).toBeInstanceOf(Uint8Array);
   });
@@ -158,9 +161,11 @@ describe('relation filters', () => {
     const { args, converted } = walk('User', 'findMany', {
       where: { posts: { some: { authorId: UUID_A } } },
     });
-    const inner = (args as {
-      where: { posts: { some: { authorId: Uint8Array } } };
-    }).where.posts.some.authorId;
+    const inner = (
+      args as {
+        where: { posts: { some: { authorId: Uint8Array } } };
+      }
+    ).where.posts.some.authorId;
     expect(inner).toBeInstanceOf(Uint8Array);
     expect(converted).toBe(1);
   });
@@ -169,9 +174,11 @@ describe('relation filters', () => {
     const { args } = walk('User', 'findMany', {
       where: { posts: { every: { authorId: UUID_A } } },
     });
-    const inner = (args as {
-      where: { posts: { every: { authorId: Uint8Array } } };
-    }).where.posts.every.authorId;
+    const inner = (
+      args as {
+        where: { posts: { every: { authorId: Uint8Array } } };
+      }
+    ).where.posts.every.authorId;
     expect(inner).toBeInstanceOf(Uint8Array);
   });
 
@@ -180,8 +187,7 @@ describe('relation filters', () => {
       where: { posts: { none: { authorId: UUID_A } } },
     });
     expect(
-      (args as { where: { posts: { none: { authorId: Uint8Array } } } }).where.posts.none
-        .authorId,
+      (args as { where: { posts: { none: { authorId: Uint8Array } } } }).where.posts.none.authorId,
     ).toBeInstanceOf(Uint8Array);
   });
 
@@ -209,9 +215,11 @@ describe('data (create / update)', () => {
     const { args, converted } = walk('User', 'create', {
       data: { id: UUID_A, name: 'Alice', companyId: UUID_B },
     });
-    const data = (args as {
-      data: { id: Uint8Array; companyId: Uint8Array; name: string };
-    }).data;
+    const data = (
+      args as {
+        data: { id: Uint8Array; companyId: Uint8Array; name: string };
+      }
+    ).data;
     expect(data.id).toBeInstanceOf(Uint8Array);
     expect(data.companyId).toBeInstanceOf(Uint8Array);
     expect(data.name).toBe('Alice');
@@ -281,16 +289,18 @@ describe('nested writes', () => {
         },
       },
     });
-    const coc = (args as {
-      data: {
-        author: {
-          connectOrCreate: {
-            where: { id: Uint8Array };
-            create: { id: Uint8Array; name: string };
+    const coc = (
+      args as {
+        data: {
+          author: {
+            connectOrCreate: {
+              where: { id: Uint8Array };
+              create: { id: Uint8Array; name: string };
+            };
           };
         };
-      };
-    }).data.author.connectOrCreate;
+      }
+    ).data.author.connectOrCreate;
     expect(coc.where.id).toBeInstanceOf(Uint8Array);
     expect(coc.create.id).toBeInstanceOf(Uint8Array);
   });
@@ -308,17 +318,19 @@ describe('nested writes', () => {
         },
       },
     });
-    const upsert = (args as {
-      data: {
-        posts: {
-          upsert: {
-            where: { id: Uint8Array };
-            create: { id: Uint8Array };
-            update: { title: string };
+    const upsert = (
+      args as {
+        data: {
+          posts: {
+            upsert: {
+              where: { id: Uint8Array };
+              create: { id: Uint8Array };
+              update: { title: string };
+            };
           };
         };
-      };
-    }).data.posts.upsert;
+      }
+    ).data.posts.upsert;
     expect(upsert.where.id).toBeInstanceOf(Uint8Array);
     expect(upsert.create.id).toBeInstanceOf(Uint8Array);
   });
@@ -431,14 +443,18 @@ describe('error handling', () => {
 
   test('wrong type passes through when strictValidation disabled', () => {
     const lax = normalizeConfig({ ...BASE_CONFIG, options: { strictValidation: false } });
-    const { args } = walkArgs(lax, 'User', 'findUnique', { where: { id: 42 as unknown as string } });
+    const { args } = walkArgs(lax, 'User', 'findUnique', {
+      where: { id: 42 as unknown as string },
+    });
     expect((args as { where: { id: number } }).where.id).toBe(42);
   });
 });
 
 describe('unknown model / no model', () => {
   test('$executeRaw-style args with no model passes through', () => {
-    const { args, converted } = walk(undefined as unknown as string, 'findMany', { where: { id: UUID_A } });
+    const { args, converted } = walk(undefined as unknown as string, 'findMany', {
+      where: { id: UUID_A },
+    });
     // Since model is undefined the walker returns args unchanged.
     expect(args).toEqual({ where: { id: UUID_A } });
     expect(converted).toBe(0);

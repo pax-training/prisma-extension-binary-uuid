@@ -45,7 +45,12 @@ model Analytics {
 describe('parseSchema', () => {
   test('extracts models', () => {
     const schema = parseSchema(SCHEMA);
-    expect(schema.models.map((m) => m.name).sort()).toEqual(['Analytics', 'Company', 'Post', 'User']);
+    expect(schema.models.map((m) => m.name).sort()).toEqual([
+      'Analytics',
+      'Company',
+      'Post',
+      'User',
+    ]);
   });
 
   test('identifies UUID-candidate fields (Char(36) + Binary(16))', () => {
@@ -88,6 +93,48 @@ describe('parseSchema', () => {
     const analytics = schema.modelByName.get('Analytics')!;
     expect(analytics.fields.every((f) => !f.isUuidCandidate)).toBe(true);
   });
+
+  test('skips @@-prefixed model-level attributes (e.g. @@map, @@index)', () => {
+    const schemaWithIndexes = `
+model User {
+  id    String @id @db.Char(36)
+  email String @unique
+  @@map("users")
+  @@index([email])
+}
+`;
+    const parsed = parseSchema(schemaWithIndexes);
+    const u = parsed.modelByName.get('User')!;
+    // @@-attrs must NOT appear as fields, but real fields must.
+    expect(u.fields.map((f) => f.name).sort()).toEqual(['email', 'id']);
+  });
+
+  test("skips lines that don't match field regex (comments, blanks)", () => {
+    const schemaWithJunk = `
+model User {
+  // some comment line
+  id    String @id @db.Char(36)
+
+  email String @unique
+}
+`;
+    const parsed = parseSchema(schemaWithJunk);
+    const u = parsed.modelByName.get('User')!;
+    expect(u.fields.map((f) => f.name).sort()).toEqual(['email', 'id']);
+  });
+
+  test('handles fields with no @-attrs (regex empty group fallback)', () => {
+    const bareSchema = `
+model User {
+  id   String @id @db.Char(36)
+  bio  String
+}
+`;
+    const parsed = parseSchema(bareSchema);
+    const bio = parsed.modelByName.get('User')!.fields.find((f) => f.name === 'bio')!;
+    expect(bio.dbType).toBeUndefined();
+    expect(bio.isUuidCandidate).toBe(false);
+  });
 });
 
 describe('buildRegistry', () => {
@@ -126,10 +173,48 @@ describe('emitConfig', () => {
     const schema = parseSchema(SCHEMA);
     const { config } = buildRegistry(schema);
     const emitted = emitConfig(config);
-    expect(emitted).toContain("import { defineBinaryUuidConfig } from 'prisma-extension-binary-uuid';");
+    expect(emitted).toContain(
+      "import { defineBinaryUuidConfig } from 'prisma-extension-binary-uuid';",
+    );
     expect(emitted).toContain('export const uuidConfig = defineBinaryUuidConfig({');
     expect(emitted).toContain("User: ['companyId', 'id']"); // alphabetized
     expect(emitted).toContain("Post: ['authorId', 'id']");
+  });
+
+  test('emits autoGenerate block when supplied', () => {
+    const emitted = emitConfig({
+      fields: { User: ['id'], Post: ['id'] },
+      autoGenerate: { User: ['id'], Post: ['id'] },
+    });
+    expect(emitted).toContain('autoGenerate:');
+    expect(emitted).toContain("User: ['id']");
+    expect(emitted).toContain("Post: ['id']");
+  });
+
+  test('omits autoGenerate block when empty', () => {
+    const emitted = emitConfig({
+      fields: { User: ['id'] },
+      autoGenerate: {},
+    });
+    expect(emitted).not.toContain('autoGenerate:');
+  });
+
+  test('emits relations block when supplied', () => {
+    const emitted = emitConfig({
+      fields: { User: ['id'], Post: ['id'] },
+      relations: { User: { posts: 'Post' }, Post: { author: 'User' } },
+    });
+    expect(emitted).toContain('relations:');
+    expect(emitted).toContain("posts: 'Post'");
+    expect(emitted).toContain("author: 'User'");
+  });
+
+  test('omits relations block when empty', () => {
+    const emitted = emitConfig({
+      fields: { User: ['id'] },
+      relations: {},
+    });
+    expect(emitted).not.toContain('relations:');
   });
 });
 
@@ -140,7 +225,7 @@ describe('emitMigrationSql', () => {
     expect(sql).toContain('ALTER TABLE `User` ADD COLUMN `id__bin` BINARY(16) NOT NULL');
     expect(sql).toContain('UPDATE `User` SET `id__bin` = UUID_TO_BIN(`id`, 1)');
     expect(sql).toContain('ALTER TABLE `User` DROP COLUMN `id`');
-    expect(sql).toContain("FOREIGN_KEY_CHECKS = 0");
+    expect(sql).toContain('FOREIGN_KEY_CHECKS = 0');
   });
 
   test('skips already-Binary(16) columns', () => {

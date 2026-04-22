@@ -3,7 +3,8 @@
  */
 
 // RFC 4122 dashed form: 8-4-4-4-12 hex chars. Case-insensitive on input.
-const UUID_DASHED_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const UUID_DASHED_RE =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 // Bare 32-hex form (what we sometimes emit internally).
 const UUID_HEX_RE = /^[0-9a-fA-F]{32}$/;

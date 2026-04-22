@@ -18,9 +18,9 @@ jobs:
     name: Lint + Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -33,9 +33,9 @@ jobs:
     name: Typecheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -49,11 +49,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [18, 20, 22]
+        # Track Prisma 7's engines field (^20.19 || ^22.12 || >=24).
+        node: [20, 22, 24]
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
@@ -67,9 +68,9 @@ jobs:
     name: Build (ESM + CJS)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -77,7 +78,7 @@ jobs:
       - run: pnpm prisma generate
       - run: pnpm build
       - run: pnpm size
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist
@@ -97,9 +98,9 @@ jobs:
         prisma:
           - '7.7.0'
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -112,21 +113,72 @@ jobs:
           PODMAN_CMD: docker
         run: pnpm test:integration
 
+  prisma-compat:
+    # Verifies the extension factory + walker work end-to-end against every
+    # Prisma minor we declare in `peerDependencies` (>=5 <8). Runs the unit +
+    # property + extension-factory smoke tests against an installed copy of
+    # each version.
+    #
+    # We deliberately skip `prisma generate` here: the dev schema is targeted
+    # at Prisma 7 (no `datasource url` because we feed it via adapter at
+    # runtime) and Prisma 5 rejects that. The walker code never imports
+    # generated model delegates — it only uses `Prisma.defineExtension` and
+    # the `$allOperations` runtime hook, both of which are stable across
+    # Prisma 5 → 7. The smoke test exercises both surfaces explicitly.
+    name: Prisma compat (${{ matrix.prisma }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        prisma:
+          - '5.22.0' # latest 5.x
+          - '6.19.3' # latest 6.x
+          - '7.7.0' # latest 7.x
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm add -D "@prisma/client@${{ matrix.prisma }}" "prisma@${{ matrix.prisma }}"
+      - name: Unit + property tests
+        run: |
+          pnpm test:unit
+          pnpm test:property
+      - name: Smoke-test extension factory against installed Prisma version
+        run: pnpm tsx test/compat/prisma-version-smoke.ts
+
   coverage:
     name: Coverage (unit + property)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma generate
       - run: pnpm test:coverage
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage
           retention-days: 30
+
+  bench-regression:
+    name: Benchmark regression gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate
+      - run: pnpm bench:check

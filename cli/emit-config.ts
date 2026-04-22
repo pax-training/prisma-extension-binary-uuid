@@ -30,8 +30,7 @@ export function emitConfig(config: BinaryUuidConfig): string {
   lines.push(`export const uuidConfig = defineBinaryUuidConfig({`);
   lines.push(`  fields: {`);
   for (const model of Object.keys(sortedFields)) {
-    const fieldList = sortedFields[model]!
-      .slice()
+    const fieldList = sortedFields[model]!.slice()
       .sort()
       .map((f) => `'${f}'`)
       .join(', ');
@@ -43,8 +42,7 @@ export function emitConfig(config: BinaryUuidConfig): string {
     const sortedAutoGen = sortMapKeys(autoGen);
     lines.push(`  autoGenerate: {`);
     for (const model of Object.keys(sortedAutoGen)) {
-      const fieldList = sortedAutoGen[model]!
-        .slice()
+      const fieldList = sortedAutoGen[model]!.slice()
         .sort()
         .map((f) => `'${f}'`)
         .join(', ');

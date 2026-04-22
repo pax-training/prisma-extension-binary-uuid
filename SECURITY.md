@@ -33,8 +33,8 @@ Issues NOT in scope (report upstream):
 
 ## Supported versions
 
-| Version | Supported |
-| ------- | --------- |
+| Version | Supported  |
+| ------- | ---------- |
 | 1.x     | ✅ current |
 
 When 2.x ships, 1.x will receive security patches for 6 months.

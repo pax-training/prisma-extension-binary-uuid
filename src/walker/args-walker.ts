@@ -14,9 +14,9 @@
  *   - Allocation-minimal: only clones objects that contain transformed values.
  */
 
+import type { NormalizedConfig } from '../config/types.js';
 import { uidToBin } from '../conversion/uuid-binary.js';
 import { isUuidBytes } from '../conversion/validation.js';
-import type { NormalizedConfig } from '../config/types.js';
 import { TypeMismatchError } from '../errors.js';
 
 import {
@@ -113,9 +113,7 @@ function walkOperationArgs(
     }
 
     if (transformed !== value) {
-      if (out === undefined) {
-        out = { ...args };
-      }
+      out ??= { ...args };
       out[key] = transformed;
     }
   }
@@ -158,9 +156,7 @@ function walkWhere(
     }
 
     if (transformed !== value) {
-      if (out === undefined) {
-        out = { ...obj };
-      }
+      out ??= { ...obj };
       out[key] = transformed;
     }
   }
@@ -219,7 +215,9 @@ function walkUuidFieldValue(
       const inner = obj[op];
       let transformed: unknown = inner;
       if (ARRAY_SCALAR_OPERATORS.has(op) && Array.isArray(inner)) {
-        transformed = walkArray(inner, (v) => convertScalarUuidValue(v, config, model, field, counter));
+        transformed = walkArray(inner, (v) =>
+          convertScalarUuidValue(v, config, model, field, counter),
+        );
       } else if (op === 'not') {
         // `not` can be a scalar, an array (deprecated but present), or a nested operator object.
         transformed = walkUuidFieldValue(config, model, field, inner, counter);
@@ -227,9 +225,7 @@ function walkUuidFieldValue(
         transformed = convertScalarUuidValue(inner, config, model, field, counter);
       }
       if (transformed !== inner) {
-        if (out === undefined) {
-          out = { ...obj };
-        }
+        out ??= { ...obj };
         out[op] = transformed;
       }
     }
@@ -286,9 +282,7 @@ function walkRelationFilter(
     if (RELATION_FILTER_OPERATORS.has(op)) {
       const transformed = walkWhere(config, targetModel, inner, counter);
       if (transformed !== inner) {
-        if (out === undefined) {
-          out = { ...obj };
-        }
+        out ??= { ...obj };
         out[op] = transformed;
       }
     }
@@ -334,22 +328,19 @@ function walkData(
     }
 
     if (transformed !== value) {
-      if (out === undefined) {
-        out = { ...obj };
-      }
+      out ??= { ...obj };
       out[key] = transformed;
     }
   }
 
   // Auto-generate missing UUIDs for create-like operations.
-  const isCreateLike = operation === 'create' || operation === 'createMany' || operation === 'upsert';
+  const isCreateLike =
+    operation === 'create' || operation === 'createMany' || operation === 'upsert';
   if (isCreateLike && autoGen !== undefined && autoGen.size > 0) {
     for (const field of autoGen) {
       const haveValue = (out ?? obj)[field];
       if (haveValue === undefined) {
-        if (out === undefined) {
-          out = { ...obj };
-        }
+        out ??= { ...obj };
         out[field] = config.generate();
         counter.count++;
       }
@@ -386,9 +377,7 @@ function walkUuidDataFieldValue(
         const inner = obj[op];
         const converted = convertScalarUuidValue(inner, config, model, field, counter);
         if (converted !== inner) {
-          if (out === undefined) {
-            out = { ...obj };
-          }
+          out ??= { ...obj };
           out[op] = converted;
         }
       }
@@ -418,10 +407,7 @@ function walkNestedWrite(
   counter: ConversionCounter,
 ): unknown {
   if (value === null || value === undefined) return value;
-  if (Array.isArray(value)) {
-    return walkArray(value, (v) => walkNestedWrite(config, targetModel, v, counter));
-  }
-  if (typeof value !== 'object') return value;
+  if (typeof value !== 'object' || Array.isArray(value)) return value;
 
   const obj = value as Record<string, unknown>;
   let out: Record<string, unknown> | undefined;
@@ -495,24 +481,10 @@ function walkNestedWrite(
           transformed = walkConnectOrCreate(config, targetModel, inner, counter);
         }
         break;
-      case 'push':
-        // Scalar list push — values are the scalar type. For UUIDs, convert array elements.
-        if (Array.isArray(inner)) {
-          // We don't know which field this is for here (push is under a field name).
-          // Fall through: if we got here, the parent walkData already determined
-          // the field was a relation, not a scalar. Safe to pass through.
-          transformed = inner;
-        }
-        break;
-      default:
-        transformed = inner;
-        break;
     }
 
     if (transformed !== inner) {
-      if (out === undefined) {
-        out = { ...obj };
-      }
+      out ??= { ...obj };
       out[key] = transformed;
     }
   }
@@ -548,7 +520,7 @@ function walkNestedUpdate(
   if ('data' in obj) {
     const transformed = walkData(config, model, 'update', obj['data'], counter);
     if (transformed !== obj['data']) {
-      if (out === undefined) out = { ...obj };
+      out ??= { ...obj };
       out['data'] = transformed;
     }
   }
@@ -577,14 +549,14 @@ function walkNestedUpsert(
   if ('create' in obj) {
     const transformed = walkData(config, model, 'create', obj['create'], counter);
     if (transformed !== obj['create']) {
-      if (out === undefined) out = { ...obj };
+      out ??= { ...obj };
       out['create'] = transformed;
     }
   }
   if ('update' in obj) {
     const transformed = walkData(config, model, 'update', obj['update'], counter);
     if (transformed !== obj['update']) {
-      if (out === undefined) out = { ...obj };
+      out ??= { ...obj };
       out['update'] = transformed;
     }
   }
@@ -613,7 +585,7 @@ function walkConnectOrCreate(
   if ('create' in obj) {
     const transformed = walkData(config, model, 'create', obj['create'], counter);
     if (transformed !== obj['create']) {
-      if (out === undefined) out = { ...obj };
+      out ??= { ...obj };
       out['create'] = transformed;
     }
   }
@@ -660,9 +632,7 @@ function walkSelectOrInclude(
       counter,
     );
     if (transformed !== inner) {
-      if (out === undefined) {
-        out = { ...obj };
-      }
+      out ??= { ...obj };
       out[key] = transformed;
     }
   }
@@ -678,9 +648,7 @@ function walkArray<T>(arr: readonly T[], fn: (v: T) => unknown): unknown {
   for (let i = 0; i < arr.length; i++) {
     const transformed = fn(arr[i]!);
     if (transformed !== arr[i]) {
-      if (out === undefined) {
-        out = arr.slice();
-      }
+      out ??= arr.slice();
       out[i] = transformed;
     }
   }

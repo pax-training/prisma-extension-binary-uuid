@@ -2,8 +2,8 @@
  * Build a Prisma client pointed at a test container, wrap with the extension.
  */
 
-import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { PrismaClient } from '@prisma/client';
 
 import { createBinaryUuidExtension } from '../../../src/index.js';
 

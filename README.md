@@ -96,14 +96,24 @@ See [docs/how-it-works.md](docs/how-it-works.md) for the full breakdown.
 ## Supported versions
 
 | Prisma Client | MySQL 8.0 | MySQL 8.4 | MariaDB 10.11 | MariaDB 11.x |
-| --- | --- | --- | --- | --- |
-| 7.x (latest) | ✅ | ✅ | ✅ | ✅ |
+| ------------- | --------- | --------- | ------------- | ------------ |
+| 5.x (latest)  | ✅\*      | ✅\*      | ✅\*          | ✅\*         |
+| 6.x (latest)  | ✅\*      | ✅\*      | ✅\*          | ✅\*         |
+| 7.x (latest)  | ✅        | ✅        | ✅            | ✅           |
 
-Matrix verified locally via `pnpm test:matrix` (real podman/docker
-containers, 21 integration tests per target). MySQL 5.7 works against the
-extension itself but is excluded from the default matrix because it reached
-EOL October 2023 and rejects expression DEFAULTs;
-[full matrix](docs/version-matrix.md) explains how to opt in.
+Databases × Prisma 7.x are verified via the full integration suite
+(`pnpm test:matrix`, 21 tests on a real podman/docker container per target).
+Prisma 5.x and 6.x are verified via the `prisma-compat` CI job — unit +
+property + extension-factory smoke tests against the installed client — and
+share the same conversion / walker code paths as 7.x. The \* marks
+Prisma-version-specific verification that covers API surface compat; full
+CRUD across 5.x/6.x is covered transitively because the walker is Prisma
+version independent (it uses only `Prisma.defineExtension` and
+`$allOperations`, which are stable across 5→7).
+
+MySQL 5.7 works against the extension itself but is excluded from the
+default matrix because it reached EOL October 2023 and rejects expression
+DEFAULTs; [full matrix](docs/version-matrix.md) explains how to opt in.
 
 AWS Aurora MySQL 8.0 is protocol-compatible with MySQL 8.0 and works with no
 extra configuration.
@@ -121,13 +131,13 @@ Full walkthrough: [docs/migration-guide.md](docs/migration-guide.md).
 
 ## Comparison to alternatives
 
-| Approach | Disk savings | Type safety | Maintenance burden |
-| --- | --- | --- | --- |
-| `String @db.Char(36)` (Prisma default) | Baseline | ✅ full | Zero |
-| `$queryRaw` with `BIN_TO_UUID()` (Prisma's recommendation) | ~55% | ❌ lost | High (every query rewritten) |
-| `Bytes @db.Binary(16)` with manual conversion | ~55% | ⚠️ mixed | High (every call site converts) |
-| **This extension** | **~55%** | **✅ preserved** | **Low (config file)** |
-| Change ID strategy to CUID2/Snowflake | ~30% (CUID2) / ~75% (Snowflake) | ✅ full | Medium (application refactor) |
+| Approach                                                   | Disk savings                    | Type safety      | Maintenance burden              |
+| ---------------------------------------------------------- | ------------------------------- | ---------------- | ------------------------------- |
+| `String @db.Char(36)` (Prisma default)                     | Baseline                        | ✅ full          | Zero                            |
+| `$queryRaw` with `BIN_TO_UUID()` (Prisma's recommendation) | ~55%                            | ❌ lost          | High (every query rewritten)    |
+| `Bytes @db.Binary(16)` with manual conversion              | ~55%                            | ⚠️ mixed         | High (every call site converts) |
+| **This extension**                                         | **~55%**                        | **✅ preserved** | **Low (config file)**           |
+| Change ID strategy to CUID2/Snowflake                      | ~30% (CUID2) / ~75% (Snowflake) | ✅ full          | Medium (application refactor)   |
 
 ## Trade-offs
 

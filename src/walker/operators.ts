@@ -34,7 +34,12 @@ export const SCALAR_OPERATORS: ReadonlySet<string> = new Set([
  * Operators whose value is an array of the same parent shape. Callers can
  * safely iterate the array and re-apply conversion.
  */
-export const ARRAY_SCALAR_OPERATORS: ReadonlySet<string> = new Set(['in', 'notIn', 'hasSome', 'hasEvery']);
+export const ARRAY_SCALAR_OPERATORS: ReadonlySet<string> = new Set([
+  'in',
+  'notIn',
+  'hasSome',
+  'hasEvery',
+]);
 
 /**
  * Relation filter operators: their value is a nested where-clause in the
@@ -77,7 +82,6 @@ export const WRITE_NESTED_OPERATORS: ReadonlySet<string> = new Set([
   'deleteMany',
   'set',
   'disconnect',
-  'push',
 ]);
 
 /**

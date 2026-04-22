@@ -37,9 +37,11 @@ afterAll(async () => {
 
 d('schema sanity', () => {
   test('User.id is BINARY(16)', async () => {
-    const rows = (await (prisma as unknown as {
-      $queryRawUnsafe: (sql: string) => Promise<Array<{ COLUMN_TYPE: string | Buffer }>>;
-    }).$queryRawUnsafe(
+    const rows = (await (
+      prisma as unknown as {
+        $queryRawUnsafe: (sql: string) => Promise<Array<{ COLUMN_TYPE: string | Buffer }>>;
+      }
+    ).$queryRawUnsafe(
       `SELECT CAST(COLUMN_TYPE AS CHAR) AS COLUMN_TYPE
        FROM information_schema.COLUMNS
        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'User' AND COLUMN_NAME = 'id'`,
@@ -88,7 +90,9 @@ d('findUnique / findFirst / findMany', () => {
   test('findUnique by string id round-trips', async () => {
     const email = `fu-${Date.now()}@example.com`;
     const created = await prisma.user.create({ data: { email } });
-    const found = await prisma.user.findUnique({ where: { id: u(created.id as unknown as string) } });
+    const found = await prisma.user.findUnique({
+      where: { id: u(created.id as unknown as string) },
+    });
     expect(found?.id).toBe(created.id);
     expect(found?.email).toBe(email);
   });
@@ -231,9 +235,7 @@ d('cursor pagination', () => {
 
 d('error paths', () => {
   test('malformed UUID in where throws', async () => {
-    await expect(
-      prisma.user.findUnique({ where: { id: u('not-a-uuid') } }),
-    ).rejects.toThrow();
+    await expect(prisma.user.findUnique({ where: { id: u('not-a-uuid') } })).rejects.toThrow();
   });
 
   test('duplicate email throws', async () => {
