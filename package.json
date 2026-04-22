@@ -125,7 +125,10 @@
       "@prisma/client",
       "prisma",
       "esbuild"
-    ]
+    ],
+    "overrides": {
+      "@hono/node-server": "^1.19.13"
+    }
   },
   "size-limit": [
     {
