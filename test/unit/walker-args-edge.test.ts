@@ -526,3 +526,25 @@ describe('lenient (non-strict) validation', () => {
     expect((args as { where: { id: Uint8Array } }).where.id).toBe(bin);
   });
 });
+
+describe('allowBufferInput: false option', () => {
+  beforeEach(() => {
+    config = normalizeConfig({ ...BASE, options: { allowBufferInput: false } });
+  });
+
+  test('rejects Uint8Array in field position with TypeMismatchError', async () => {
+    const { TypeMismatchError } = await import('../../src/errors.js');
+    const bin = new Uint8Array(16);
+    bin.fill(0xab);
+    expect(() =>
+      walkArgs(config, 'User', 'findMany', {
+        where: { id: bin as unknown as string },
+      }),
+    ).toThrow(TypeMismatchError);
+  });
+
+  test('still accepts string UUIDs when allowBufferInput is false', () => {
+    const { args } = walkArgs(config, 'User', 'findMany', { where: { id: UUID_A } });
+    expect((args as { where: { id: Uint8Array } }).where.id).toBeInstanceOf(Uint8Array);
+  });
+});

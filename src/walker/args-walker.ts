@@ -204,7 +204,9 @@ function walkUuidFieldValue(
     return uidToBin(value);
   }
   if (isUuidBytes(value)) {
-    // Idempotent pass-through.
+    if (!config.allowBufferInput) {
+      throw new TypeMismatchError('Uint8Array', { model, field });
+    }
     return value;
   }
   if (typeof value === 'object' && !Array.isArray(value)) {
@@ -255,7 +257,13 @@ function convertScalarUuidValue(
     counter.count++;
     return uidToBin(value);
   }
-  if (isUuidBytes(value)) return value;
+  if (isUuidBytes(value)) {
+    // Caller pre-converted to binary. Accept unless the config forbids it.
+    if (!config.allowBufferInput) {
+      throw new TypeMismatchError('Uint8Array', { model, field });
+    }
+    return value;
+  }
   if (config.strictValidation) {
     throw new TypeMismatchError(typeof value, { model, field });
   }
@@ -368,7 +376,12 @@ function walkUuidDataFieldValue(
     counter.count++;
     return uidToBin(value);
   }
-  if (isUuidBytes(value)) return value;
+  if (isUuidBytes(value)) {
+    if (!config.allowBufferInput) {
+      throw new TypeMismatchError('Uint8Array', { model, field });
+    }
+    return value;
+  }
   if (typeof value === 'object' && !Array.isArray(value)) {
     const obj = value as Record<string, unknown>;
     let out: Record<string, unknown> | undefined;

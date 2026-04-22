@@ -53,14 +53,24 @@ Every PR runs:
 pnpm bench:check
 ```
 
-This re-runs the suite via `mitata` (consistent harness, ~25s) and fails
-the PR if any benchmark's mean ns/op exceeds the committed baseline at
-`test/benchmark/baselines/walker-overhead.baseline.json` by more than 25%.
-Intentional regressions require running `pnpm bench:baseline` and
-committing the updated baseline in the same PR.
+This re-runs the suite via `mitata` (consistent harness, ~10s on Ubuntu)
+and fails the PR if any benchmark's mean ns/op exceeds the committed
+per-platform baseline by more than 35%. Baselines are keyed by
+`${platform}-${arch}`:
 
-The 25% threshold accounts for the variance that shared CI runners
-exhibit on microbenchmarks. To run a tighter gate locally:
+- `test/benchmark/baselines/walker-overhead.darwin-arm64.json`
+- `test/benchmark/baselines/walker-overhead.linux-x64.json`
+
+Intentional regressions: run `pnpm bench:baseline` locally and commit
+the updated baseline for your platform in the same PR. CI captures a
+fresh baseline and uploads it as the `bench-baseline-Linux-X64`
+artifact on every run — maintainers download and commit that to
+refresh the Linux baseline when the Ubuntu host class shifts.
+
+The 35% threshold accounts for the run-to-run variance that shared
+GitHub Actions runners exhibit on microbenchmarks (different Azure host
+classes exhibit 15–25% variance by themselves). To run a tighter gate
+on your own hardware:
 
 ```bash
 REGRESSION_THRESHOLD=0.10 pnpm bench:check
