@@ -12,7 +12,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { GenericContainer, type StartedTestContainer } from 'testcontainers';
+import { GenericContainer, Wait, type StartedTestContainer } from 'testcontainers';
 
 const DEFAULT_IMAGE = 'mysql:8.0';
 
@@ -51,10 +51,27 @@ export async function startTestDb(options?: { image?: string }): Promise<TestDb>
     ? { MARIADB_ROOT_PASSWORD: password, MARIADB_DATABASE: database }
     : { MYSQL_ROOT_PASSWORD: password, MYSQL_DATABASE: database };
 
+  // MySQL/MariaDB images log "ready for connections" once when the DB engine
+  // boots and again when it's actually listening on the network. We need the
+  // second one. Wait for it, then still poll the wire protocol to be safe —
+  // on GitHub Actions runners there's occasionally a gap between the log line
+  // and accept().
   const container = await new GenericContainer(image)
     .withEnvironment(envVars)
+    // MySQL 8+ defaults to caching_sha2_password; the mariadb driver
+    // (both npm and @prisma/adapter-mariadb) negotiates it correctly on
+    // recent versions, but forcing native_password avoids edge cases with
+    // older clients that might be active in CI.
+    .withCommand(
+      isMariaDb
+        ? []
+        : ['--default-authentication-plugin=mysql_native_password'],
+    )
     .withExposedPorts(3306)
-    .withStartupTimeout(180_000)
+    .withStartupTimeout(300_000)
+    .withWaitStrategy(
+      Wait.forLogMessage(/ready for connections.+port: 3306/, 2).withStartupTimeout(300_000),
+    )
     .start();
 
   const host = container.getHost();
