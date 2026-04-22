@@ -18,7 +18,7 @@ full runbook.
 5. **Recreate indexes/FKs** — `npx prisma db push`.
 6. **Install + wire extension**:
    ```bash
-   pnpm add prisma-extension-binary-uuid
+   pnpm add @pax-training/prisma-extension-binary-uuid
    npx prisma-extension-binary-uuid init
    ```
 7. **Deploy** — the application code that imports `prisma.ts` with the

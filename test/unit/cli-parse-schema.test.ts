@@ -174,7 +174,7 @@ describe('emitConfig', () => {
     const { config } = buildRegistry(schema);
     const emitted = emitConfig(config);
     expect(emitted).toContain(
-      "import { defineBinaryUuidConfig } from 'prisma-extension-binary-uuid';",
+      "import { defineBinaryUuidConfig } from '@pax-training/prisma-extension-binary-uuid';",
     );
     expect(emitted).toContain('export const uuidConfig = defineBinaryUuidConfig({');
     expect(emitted).toContain("User: ['companyId', 'id']"); // alphabetized

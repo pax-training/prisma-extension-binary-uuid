@@ -9,7 +9,7 @@
  * Usage:
  * ```ts
  * import { PrismaClient } from '@prisma/client';
- * import { createBinaryUuidExtension } from 'prisma-extension-binary-uuid';
+ * import { createBinaryUuidExtension } from '@pax-training/prisma-extension-binary-uuid';
  * import { uuidConfig } from './uuid-config';
  *
  * const prisma = new PrismaClient().$extends(createBinaryUuidExtension(uuidConfig));

@@ -7,7 +7,7 @@ transactions.
 
 ```ts
 import { prisma } from './prisma';
-import { uuidString } from 'prisma-extension-binary-uuid';
+import { uuidString } from '@pax-training/prisma-extension-binary-uuid';
 
 const result = await prisma.$transaction(async (tx) => {
   // `tx` is the extended client — all UUID conversion still happens.

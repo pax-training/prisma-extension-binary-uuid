@@ -11,7 +11,7 @@ This page gets you from zero to a working extension in 10 minutes.
 ## Installation
 
 ```bash
-pnpm add prisma-extension-binary-uuid
+pnpm add @pax-training/prisma-extension-binary-uuid
 ```
 
 ## Step 1 — Flip your schema
@@ -65,7 +65,7 @@ without updating the config fails the build.
 // src/prisma.ts
 import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import { createBinaryUuidExtension } from 'prisma-extension-binary-uuid';
+import { createBinaryUuidExtension } from '@pax-training/prisma-extension-binary-uuid';
 import { uuidConfig } from './uuid-config';
 
 const adapter = new PrismaMariaDb(process.env.DATABASE_URL!);
@@ -75,7 +75,7 @@ export const prisma = new PrismaClient({ adapter }).$extends(createBinaryUuidExt
 ## Step 4 — Query as usual
 
 ```ts
-import { uuidString } from 'prisma-extension-binary-uuid';
+import { uuidString } from '@pax-training/prisma-extension-binary-uuid';
 
 // String in, string out:
 const user = await prisma.user.findUnique({

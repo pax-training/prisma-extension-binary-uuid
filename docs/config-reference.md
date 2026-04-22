@@ -3,7 +3,7 @@
 Every option on the `BinaryUuidConfig` object.
 
 ```ts
-import { defineBinaryUuidConfig } from 'prisma-extension-binary-uuid';
+import { defineBinaryUuidConfig } from '@pax-training/prisma-extension-binary-uuid';
 
 export const uuidConfig = defineBinaryUuidConfig({
   fields: {
@@ -161,5 +161,5 @@ import type {
   UuidFieldMap,
   RelationTargetMap,
   UuidVersion,
-} from 'prisma-extension-binary-uuid';
+} from '@pax-training/prisma-extension-binary-uuid';
 ```

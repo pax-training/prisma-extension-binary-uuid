@@ -20,7 +20,7 @@ model User {
 
 ```ts
 // src/uuid-config.ts
-import { defineBinaryUuidConfig } from 'prisma-extension-binary-uuid';
+import { defineBinaryUuidConfig } from '@pax-training/prisma-extension-binary-uuid';
 
 export const uuidConfig = defineBinaryUuidConfig({
   fields: { User: ['id'] },
@@ -34,7 +34,7 @@ export const uuidConfig = defineBinaryUuidConfig({
 // src/prisma.ts
 import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import { createBinaryUuidExtension } from 'prisma-extension-binary-uuid';
+import { createBinaryUuidExtension } from '@pax-training/prisma-extension-binary-uuid';
 import { uuidConfig } from './uuid-config';
 
 export const prisma = new PrismaClient({

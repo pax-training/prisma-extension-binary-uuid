@@ -31,7 +31,7 @@ point-in-time snapshot feature.
 ## Step 2 — Install
 
 ```bash
-pnpm add prisma-extension-binary-uuid
+pnpm add @pax-training/prisma-extension-binary-uuid
 ```
 
 ## Step 3 — Update schema
@@ -112,7 +112,7 @@ Wire up the extension:
 ```ts
 import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import { createBinaryUuidExtension } from 'prisma-extension-binary-uuid';
+import { createBinaryUuidExtension } from '@pax-training/prisma-extension-binary-uuid';
 import { uuidConfig } from './uuid-config';
 
 export const prisma = new PrismaClient({

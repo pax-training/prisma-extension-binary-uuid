@@ -6,7 +6,7 @@ application code.
 
 [![CI](https://github.com/pax-training/prisma-extension-binary-uuid/actions/workflows/ci.yml/badge.svg)](https://github.com/pax-training/prisma-extension-binary-uuid/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![npm](https://img.shields.io/npm/v/prisma-extension-binary-uuid.svg)](https://www.npmjs.com/package/prisma-extension-binary-uuid)
+[![npm](https://img.shields.io/npm/v/@pax-training/prisma-extension-binary-uuid.svg)](https://www.npmjs.com/package/@pax-training/prisma-extension-binary-uuid)
 
 ## Why this exists
 
@@ -28,9 +28,9 @@ strings everywhere; the database stores 16 bytes.
 ## Install
 
 ```bash
-pnpm add prisma-extension-binary-uuid
-# or: npm install prisma-extension-binary-uuid
-# or: yarn add prisma-extension-binary-uuid
+pnpm add @pax-training/prisma-extension-binary-uuid
+# or: npm install @pax-training/prisma-extension-binary-uuid
+# or: yarn add @pax-training/prisma-extension-binary-uuid
 ```
 
 ## Quick start
@@ -66,7 +66,7 @@ This emits `src/uuid-config.ts` from your schema.
 ```ts
 import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import { createBinaryUuidExtension } from 'prisma-extension-binary-uuid';
+import { createBinaryUuidExtension } from '@pax-training/prisma-extension-binary-uuid';
 import { uuidConfig } from './uuid-config';
 
 const prisma = new PrismaClient({
@@ -77,7 +77,7 @@ const prisma = new PrismaClient({
 **4. Use string UUIDs in your application code**:
 
 ```ts
-import { uuidString } from 'prisma-extension-binary-uuid';
+import { uuidString } from '@pax-training/prisma-extension-binary-uuid';
 
 const user = await prisma.user.findUnique({
   where: { id: uuidString(userIdFromSession) },

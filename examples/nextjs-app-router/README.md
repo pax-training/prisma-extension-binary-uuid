@@ -12,7 +12,7 @@ server code (Server Components, Server Actions, Route Handlers):
 import 'server-only';
 import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import { createBinaryUuidExtension } from 'prisma-extension-binary-uuid';
+import { createBinaryUuidExtension } from '@pax-training/prisma-extension-binary-uuid';
 import { uuidConfig } from './uuid-config';
 
 declare global {
@@ -38,7 +38,7 @@ new client on every hot-reload in dev.
 // app/users/actions.ts
 'use server';
 import { prisma } from '@/lib/prisma';
-import { uuidString } from 'prisma-extension-binary-uuid';
+import { uuidString } from '@pax-training/prisma-extension-binary-uuid';
 
 export async function getUser(id: string) {
   return prisma.user.findUnique({ where: { id: uuidString(id) } });
@@ -58,7 +58,7 @@ expanded UUID string as input.
 ```ts
 // /app/users/[encodedId]/page.tsx
 import { decodeBase64Url } from '@/lib/id-encoding';
-import { uuidString } from 'prisma-extension-binary-uuid';
+import { uuidString } from '@pax-training/prisma-extension-binary-uuid';
 
 export default async function UserPage({ params }: { params: { encodedId: string } }) {
   const uuid = decodeBase64Url(params.encodedId);

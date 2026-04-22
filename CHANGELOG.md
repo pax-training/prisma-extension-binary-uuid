@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] — 2026-04-22
 
+Published to npm as `@pax-training/prisma-extension-binary-uuid`. The
+scoped package sits under the `pax-training` org so ownership is
+corporate from the first publish, not tied to any individual npm user.
+
 ### Added
 
 - Transparent `BINARY(16)` UUID storage for Prisma Client, driven by

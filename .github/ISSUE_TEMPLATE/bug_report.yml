@@ -11,8 +11,8 @@ body:
     id: version
     attributes:
       label: Version
-      description: '`npm ls prisma-extension-binary-uuid` output'
-      placeholder: 'e.g. prisma-extension-binary-uuid@1.0.0'
+      description: '`npm ls @pax-training/prisma-extension-binary-uuid` output'
+      placeholder: 'e.g. @pax-training/prisma-extension-binary-uuid@1.0.0'
     validations:
       required: true
 

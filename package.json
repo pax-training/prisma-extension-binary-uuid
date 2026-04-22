@@ -1,5 +1,5 @@
 {
-  "name": "prisma-extension-binary-uuid",
+  "name": "@pax-training/prisma-extension-binary-uuid",
   "version": "1.0.0",
   "description": "Transparent BINARY(16) UUID storage for Prisma + MySQL / MariaDB. Keeps string IDs in your application code while cutting storage and index size in half at the database layer.",
   "keywords": [

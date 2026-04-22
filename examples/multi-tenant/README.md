@@ -13,7 +13,7 @@ to different physical databases. Build a client factory:
 // lib/prisma-factory.ts
 import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
-import { createBinaryUuidExtension } from 'prisma-extension-binary-uuid';
+import { createBinaryUuidExtension } from '@pax-training/prisma-extension-binary-uuid';
 import { uuidConfig } from './uuid-config';
 
 const clients = new Map<string, ReturnType<typeof createClient>>();

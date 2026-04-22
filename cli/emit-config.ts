@@ -26,7 +26,9 @@ export function emitConfig(config: BinaryUuidConfig): string {
 
   const lines: string[] = [];
   lines.push(HEADER);
-  lines.push(`import { defineBinaryUuidConfig } from 'prisma-extension-binary-uuid';\n`);
+  lines.push(
+    `import { defineBinaryUuidConfig } from '@pax-training/prisma-extension-binary-uuid';\n`,
+  );
   lines.push(`export const uuidConfig = defineBinaryUuidConfig({`);
   lines.push(`  fields: {`);
   for (const model of Object.keys(sortedFields)) {
