@@ -532,13 +532,37 @@ describe('allowBufferInput: false option', () => {
     config = normalizeConfig({ ...BASE, options: { allowBufferInput: false } });
   });
 
-  test('rejects Uint8Array in field position with TypeMismatchError', async () => {
+  test('rejects Uint8Array in where clause with TypeMismatchError', async () => {
     const { TypeMismatchError } = await import('../../src/errors.js');
     const bin = new Uint8Array(16);
     bin.fill(0xab);
     expect(() =>
       walkArgs(config, 'User', 'findMany', {
         where: { id: bin as unknown as string },
+      }),
+    ).toThrow(TypeMismatchError);
+  });
+
+  test('rejects Uint8Array in data clause with TypeMismatchError', async () => {
+    const { TypeMismatchError } = await import('../../src/errors.js');
+    const bin = new Uint8Array(16);
+    bin.fill(0xab);
+    expect(() =>
+      walkArgs(config, 'User', 'update', {
+        where: { id: UUID_A },
+        data: { companyId: bin as unknown as string },
+      }),
+    ).toThrow(TypeMismatchError);
+  });
+
+  test('rejects Uint8Array passed through scalar `set` in data with TypeMismatchError', async () => {
+    const { TypeMismatchError } = await import('../../src/errors.js');
+    const bin = new Uint8Array(16);
+    bin.fill(0xab);
+    expect(() =>
+      walkArgs(config, 'User', 'update', {
+        where: { id: UUID_A },
+        data: { companyId: { set: bin } },
       }),
     ).toThrow(TypeMismatchError);
   });
