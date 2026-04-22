@@ -1,6 +1,6 @@
 // Development + integration-test schema.
 //
-// Every UUID field uses `@default(dbgenerated("(UUID_TO_BIN(UUID(), 1))"))` so
+// Every UUID field uses `@default(dbgenerated("(UNHEX(REPLACE(UUID(),'-','')))"))` so
 // the generated Prisma Client types treat them as optional on create. At
 // runtime, if the extension-equipped client sees a string UUID in `data.id`
 // it converts to binary before the query hits the DB; if `data.id` is absent
@@ -19,8 +19,8 @@ datasource db {
 }
 
 model User {
-  id         Bytes     @id @default(dbgenerated("(UUID_TO_BIN(UUID(), 1))")) @db.Binary(16)
-  storageId  Bytes     @unique @default(dbgenerated("(UUID_TO_BIN(UUID(), 1))")) @db.Binary(16)
+  id         Bytes     @id @default(dbgenerated("(UNHEX(REPLACE(UUID(),'-','')))")) @db.Binary(16)
+  storageId  Bytes     @unique @default(dbgenerated("(UNHEX(REPLACE(UUID(),'-','')))")) @db.Binary(16)
   email      String    @unique @db.VarChar(255)
   name       String?   @db.VarChar(255)
   avatar     Bytes?
@@ -33,14 +33,14 @@ model User {
 }
 
 model Company {
-  id         Bytes     @id @default(dbgenerated("(UUID_TO_BIN(UUID(), 1))")) @db.Binary(16)
+  id         Bytes     @id @default(dbgenerated("(UNHEX(REPLACE(UUID(),'-','')))")) @db.Binary(16)
   name       String    @db.VarChar(255)
   users      User[]
   createdAt  DateTime  @default(now())
 }
 
 model Post {
-  id         Bytes     @id @default(dbgenerated("(UUID_TO_BIN(UUID(), 1))")) @db.Binary(16)
+  id         Bytes     @id @default(dbgenerated("(UNHEX(REPLACE(UUID(),'-','')))")) @db.Binary(16)
   title      String    @db.VarChar(255)
   content    String?   @db.Text
   published  Boolean   @default(false)
@@ -54,14 +54,14 @@ model Post {
 }
 
 model Profile {
-  id      Bytes   @id @default(dbgenerated("(UUID_TO_BIN(UUID(), 1))")) @db.Binary(16)
+  id      Bytes   @id @default(dbgenerated("(UNHEX(REPLACE(UUID(),'-','')))")) @db.Binary(16)
   userId  Bytes   @unique @db.Binary(16)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   bio     String? @db.Text
 }
 
 model Tag {
-  id    Bytes     @id @default(dbgenerated("(UUID_TO_BIN(UUID(), 1))")) @db.Binary(16)
+  id    Bytes     @id @default(dbgenerated("(UNHEX(REPLACE(UUID(),'-','')))")) @db.Binary(16)
   name  String    @unique @db.VarChar(100)
   posts PostTag[]
 }

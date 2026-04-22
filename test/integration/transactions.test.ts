@@ -7,13 +7,9 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 
 import { buildClient, type ExtendedClient } from './_fixtures/client.js';
-import { shouldSkipIntegration, startTestDb, type TestDb } from './_fixtures/container.js';
+import { startTestDb, type TestDb } from './_fixtures/container.js';
 
-const skipReason = shouldSkipIntegration();
-if (skipReason !== null) {
-  console.warn(`[integration] ${skipReason}`);
-}
-const d = skipReason === null ? describe : describe.skip;
+const d = describe;
 
 let db: TestDb;
 let prisma: ExtendedClient;

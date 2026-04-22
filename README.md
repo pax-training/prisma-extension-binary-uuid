@@ -95,14 +95,18 @@ See [docs/how-it-works.md](docs/how-it-works.md) for the full breakdown.
 
 ## Supported versions
 
-| Prisma Client | MySQL 5.7 | MySQL 8.0 | MySQL 8.4 | MariaDB 10.11 | MariaDB 11.x |
-| --- | --- | --- | --- | --- | --- |
-| 5.x (latest) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 6.x (latest) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 7.x (latest) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Prisma Client | MySQL 8.0 | MySQL 8.4 | MariaDB 10.11 | MariaDB 11.x |
+| --- | --- | --- | --- | --- |
+| 7.x (latest) | ✅ | ✅ | ✅ | ✅ |
 
-Matrix re-run on every PR. AWS Aurora MySQL 8.0 is protocol-compatible with
-MySQL 8.0 and works with no extra configuration.
+Matrix verified locally via `pnpm test:matrix` (real podman/docker
+containers, 21 integration tests per target). MySQL 5.7 works against the
+extension itself but is excluded from the default matrix because it reached
+EOL October 2023 and rejects expression DEFAULTs;
+[full matrix](docs/version-matrix.md) explains how to opt in.
+
+AWS Aurora MySQL 8.0 is protocol-compatible with MySQL 8.0 and works with no
+extra configuration.
 
 ## Migration guide
 
