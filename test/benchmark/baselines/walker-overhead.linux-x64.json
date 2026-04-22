@@ -1,0 +1,47 @@
+{
+  "capturedAt": "2026-04-22T05:03:42.879Z",
+  "nodeVersion": "v22.22.2",
+  "platform": "linux-x64",
+  "entries": [
+    {
+      "name": "uidToBin (dashed)",
+      "meanNs": 198.57666100988868,
+      "p99Ns": 390.888916015625
+    },
+    {
+      "name": "uidFromBin",
+      "meanNs": 192.71747021261416,
+      "p99Ns": 250.308349609375
+    },
+    {
+      "name": "findUnique by id",
+      "meanNs": 296.7835423292312,
+      "p99Ns": 336.0478515625
+    },
+    {
+      "name": "findMany with in [10]",
+      "meanNs": 2331.838134765625,
+      "p99Ns": 2427.5908203125
+    },
+    {
+      "name": "nested create 3 levels deep",
+      "meanNs": 4315.157593787955,
+      "p99Ns": 11517
+    },
+    {
+      "name": "findUnique (single row, 2 UUID fields)",
+      "meanNs": 548.9407054609727,
+      "p99Ns": 1002.34423828125
+    },
+    {
+      "name": "findMany 1000 rows, 2 UUID fields each",
+      "meanNs": 543983.4984375082,
+      "p99Ns": 995039
+    },
+    {
+      "name": "findMany 100 rows with 5 nested posts each",
+      "meanNs": 346348.39404466504,
+      "p99Ns": 943761
+    }
+  ]
+}

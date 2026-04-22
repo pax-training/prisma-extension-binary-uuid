@@ -1,8 +1,13 @@
 name: Release
 
+# Triggered manually (`workflow_dispatch`) so an unprovisioned npm registry
+# doesn't break every push to main. When a maintainer wants to cut a release:
+#   1. Land the relevant changeset(s) via PR
+#   2. Trigger this workflow from the Actions tab
+#   3. changesets/action opens the versioning PR (or publishes if the
+#      versioning PR was already merged)
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: release-${{ github.ref }}
