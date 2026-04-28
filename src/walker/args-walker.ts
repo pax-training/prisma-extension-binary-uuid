@@ -153,6 +153,13 @@ function walkWhere(
       transformed = walkUuidFieldValue(config, model, key, value, counter);
     } else if (modelRelations?.has(key) === true) {
       transformed = walkRelationFilter(config, modelRelations.get(key)!, value, counter);
+    } else if (isCompoundKeyValue(value)) {
+      // Compound unique/index keys (`@@unique([a, b])`, `@@id([a, b])`) appear
+      // in `where` as `{ a_b: { a: ..., b: ... } }`. The outer name is derived
+      // from the field list, so there's no static list to match against —
+      // recurse into any plain-object value and let the inner keys hit the
+      // uuidFields / relations branches in the same model scope.
+      transformed = walkWhere(config, model, value, counter);
     }
 
     if (transformed !== value) {
@@ -162,6 +169,15 @@ function walkWhere(
   }
 
   return out ?? obj;
+}
+
+/**
+ * A value that looks like a compound-key payload: a plain (non-array) object.
+ * We intentionally do not inspect keys here — walkWhere will no-op on inner
+ * keys that don't match any uuid field or relation in the current scope.
+ */
+function isCompoundKeyValue(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /**

@@ -406,6 +406,72 @@ describe('cursor pagination', () => {
   });
 });
 
+describe('compound unique keys', () => {
+  test('findUnique on compound key converts nested uuid fields', () => {
+    const { args, converted } = walk('User', 'findUnique', {
+      where: { id_companyId: { id: UUID_A, companyId: UUID_B } },
+    });
+    const inner = (args as { where: { id_companyId: { id: Uint8Array; companyId: Uint8Array } } })
+      .where.id_companyId;
+    expect(inner.id).toBeInstanceOf(Uint8Array);
+    expect(inner.companyId).toBeInstanceOf(Uint8Array);
+    expect(uidFromBin(inner.id)).toBe(UUID_A);
+    expect(uidFromBin(inner.companyId)).toBe(UUID_B);
+    expect(converted).toBe(2);
+  });
+
+  test('compound key with a non-uuid scalar leaves it untouched', () => {
+    const date = new Date('2024-01-01');
+    const { args, converted } = walk('User', 'findUnique', {
+      where: { id_date: { id: UUID_A, date } },
+    });
+    const inner = (args as { where: { id_date: { id: Uint8Array; date: Date } } }).where.id_date;
+    expect(inner.id).toBeInstanceOf(Uint8Array);
+    expect(inner.date).toBe(date);
+    expect(converted).toBe(1);
+  });
+
+  test('upsert with compound where walks where, create, update', () => {
+    const { args, converted } = walk('User', 'upsert', {
+      where: { id_companyId: { id: UUID_A, companyId: UUID_B } },
+      create: { id: UUID_A, companyId: UUID_B },
+      update: { companyId: UUID_B },
+    });
+    const w = (args as { where: { id_companyId: { id: Uint8Array; companyId: Uint8Array } } }).where
+      .id_companyId;
+    expect(w.id).toBeInstanceOf(Uint8Array);
+    expect(w.companyId).toBeInstanceOf(Uint8Array);
+    expect(converted).toBe(5);
+  });
+
+  test('nested connect by compound key converts', () => {
+    const { args } = walk('Post', 'create', {
+      data: {
+        id: UUID_A,
+        author: { connect: { id_companyId: { id: UUID_A, companyId: UUID_B } } },
+      },
+    });
+    const inner = (
+      args as {
+        data: {
+          author: {
+            connect: { id_companyId: { id: Uint8Array; companyId: Uint8Array } };
+          };
+        };
+      }
+    ).data.author.connect.id_companyId;
+    expect(inner.id).toBeInstanceOf(Uint8Array);
+    expect(inner.companyId).toBeInstanceOf(Uint8Array);
+  });
+
+  test('unknown-key plain object with no matching fields is a no-op', () => {
+    const original = { someUnknownKey: { notAField: 'plain-string' } };
+    const { args, converted } = walk('User', 'findFirst', { where: original });
+    expect((args as { where: typeof original }).where).toBe(original);
+    expect(converted).toBe(0);
+  });
+});
+
 describe('include / select', () => {
   test('include with nested where converts', () => {
     const { args } = walk('User', 'findMany', {
