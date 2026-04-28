@@ -28,7 +28,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
           # Intentionally NO `registry-url:` here. setup-node injects a line
           # like `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` into
@@ -38,6 +38,13 @@ jobs:
           # header, and the OIDC fallback never gets reached — registry just
           # responds 404. Letting npm see no _authToken at all is what makes
           # it negotiate via the OIDC token exchange instead.
+
+      # npm 11.5+ is required for OIDC trusted publishing — earlier
+      # versions don't auto-detect ACTIONS_ID_TOKEN_REQUEST_URL and fail
+      # with ENEEDAUTH instead of negotiating an OIDC token. Node 24 ships
+      # with npm 11+; pin to latest to be safe across runner image churn.
+      - run: npm install -g npm@latest
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma generate
       - run: pnpm build
