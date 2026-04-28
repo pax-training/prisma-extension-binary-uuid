@@ -30,7 +30,14 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          registry-url: 'https://registry.npmjs.org'
+          # Intentionally NO `registry-url:` here. setup-node injects a line
+          # like `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` into
+          # the runner's .npmrc whenever registry-url is set, even if no
+          # token is supplied. With trusted publishing (no NPM_TOKEN), that
+          # placeholder expands to an empty value, npm sends a broken bearer
+          # header, and the OIDC fallback never gets reached — registry just
+          # responds 404. Letting npm see no _authToken at all is what makes
+          # it negotiate via the OIDC token exchange instead.
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma generate
       - run: pnpm build
@@ -47,17 +54,7 @@ jobs:
           title: 'chore(release): version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # No NPM_TOKEN — auth is via npm trusted publishing (OIDC) using
+          # the workflow's `id-token: write` permission and the trusted
+          # publisher entry on the npm package's settings page.
           NPM_CONFIG_PROVENANCE: 'true'
-
-      # Scoped packages under an npm org (`@pax-training/...`) are owned by
-      # the org from their first publish — no post-publish access grant is
-      # needed. This step just emits the collaborator list as a release log
-      # artifact so the ACL is visible in the run output.
-      - name: Log org ACL (informational)
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-          npm access list collaborators @pax-training/prisma-extension-binary-uuid
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
