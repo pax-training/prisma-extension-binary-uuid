@@ -208,6 +208,79 @@ describe('relation filters', () => {
       (args as { where: { author: { isNot: { id: Uint8Array } } } }).where.author.isNot.id,
     ).toBeInstanceOf(Uint8Array);
   });
+
+  test('bare to-one shorthand pivots without is/isNot wrapper', () => {
+    // Prisma accepts the operator-less form `{ author: { id: '...' } }` for
+    // non-nullable to-one relations. The walker must treat the whole object
+    // as the inner where clause for the target model.
+    const { args, converted } = walk('Post', 'findFirst', {
+      where: { author: { id: UUID_A } },
+    });
+    expect((args as { where: { author: { id: Uint8Array } } }).where.author.id).toBeInstanceOf(
+      Uint8Array,
+    );
+    expect(converted).toBe(1);
+  });
+
+  test('bare to-one walks UUID fields nested inside the related model', () => {
+    // The inner where can name any field on the related model, including
+    // UUID FKs that pivot further. `companyId` is a Bytes UUID on `User`.
+    const { args, converted } = walk('Post', 'findFirst', {
+      where: { author: { companyId: UUID_B } },
+    });
+    expect(
+      (args as { where: { author: { companyId: Uint8Array } } }).where.author.companyId,
+    ).toBeInstanceOf(Uint8Array);
+    expect(converted).toBe(1);
+  });
+
+  test('bare to-one leaves non-UUID scalar fields untouched', () => {
+    // A `name` field on User is a plain string — the walker should pass it
+    // through unconverted, while still converting the UUID alongside it.
+    const { args, converted } = walk('Post', 'findFirst', {
+      where: { author: { id: UUID_A, name: 'Alice' } },
+    });
+    const inner = (args as { where: { author: { id: Uint8Array; name: string } } }).where.author;
+    expect(inner.id).toBeInstanceOf(Uint8Array);
+    expect(inner.name).toBe('Alice');
+    expect(converted).toBe(1);
+  });
+
+  test('bare to-one combines with sibling operator-wrapped relation filters', () => {
+    // Both shapes can coexist on the same `where` (different relation keys).
+    // `author: { id }` is bare; `posts: { some: {...} }` is operator-wrapped.
+    // Each must be processed by the right path.
+    const { args, converted } = walk('User', 'findMany', {
+      where: {
+        // bare-to-one targeting User itself isn't a thing (User has no
+        // direct to-one back to itself in the test schema), so use posts
+        // for the operator branch and a plain top-level UUID for the bare
+        // sibling.
+        id: UUID_A,
+        posts: { some: { authorId: UUID_B } },
+      },
+    });
+    const w = (
+      args as {
+        where: {
+          id: Uint8Array;
+          posts: { some: { authorId: Uint8Array } };
+        };
+      }
+    ).where;
+    expect(w.id).toBeInstanceOf(Uint8Array);
+    expect(w.posts.some.authorId).toBeInstanceOf(Uint8Array);
+    expect(converted).toBe(2);
+  });
+
+  test('bare to-one with empty object is a no-op', () => {
+    // `where: { author: {} }` is valid Prisma input — matches any author.
+    // Must not throw and must not allocate.
+    const input = { where: { author: {} } };
+    const { args, converted } = walk('Post', 'findFirst', input);
+    expect((args as { where: { author: object } }).where.author).toEqual({});
+    expect(converted).toBe(0);
+  });
 });
 
 describe('data (create / update)', () => {
