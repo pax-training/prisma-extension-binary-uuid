@@ -288,7 +288,33 @@ function convertScalarUuidValue(
 
 /**
  * Relation filter: pivots model scope to the related model.
- * Value is `{ some: {...}, every: {...}, none: {...}, is: {...}, isNot: {...} }`.
+ *
+ * Two shapes Prisma accepts:
+ *
+ *   1. Operator-wrapped — `{ some: {...}, every: {...}, none: {...},
+ *      is: {...}, isNot: {...} }`. Used for to-many list filters and the
+ *      explicit nullable to-one form.
+ *
+ *   2. Bare to-one shorthand — `{ uuidField: ..., ... }` directly, with no
+ *      operator wrapper. Prisma accepts this for non-nullable to-one
+ *      relations (e.g.
+ *      `where: { author: { id: '...' } }` instead of
+ *      `where: { author: { is: { id: '...' } } }`). The whole value IS
+ *      the inner where clause.
+ *
+ * Detection rule: if NO key on the object is one of the relation filter
+ * operators we know about, treat the whole object as a bare to-one where.
+ * If at least one key is an operator, we're in shape (1) and only walk the
+ * operator-keyed branches (mixed shapes aren't valid Prisma input — Prisma
+ * itself rejects `{ is: {...}, id: '...' }` — so we don't need to support
+ * them).
+ *
+ * Without this branch, queries of the form
+ *   `where: { author: { id: '<uuid>' } }`
+ * silently passed through with the inner UUID untouched, hitting the
+ * Bytes column as a plain string and producing
+ *   "Could not convert from `base64 encoded bytes` to `PrismaValue::Bytes`."
+ * at runtime.
  */
 function walkRelationFilter(
   config: NormalizedConfig,
@@ -300,8 +326,19 @@ function walkRelationFilter(
   if (typeof value !== 'object' || Array.isArray(value)) return value;
 
   const obj = value as Record<string, unknown>;
+  const keys = Object.keys(obj);
+
+  // Bare to-one shorthand: zero relation-filter operators present, so the
+  // whole object is the inner where clause for the related model.
+  // (An empty object hits this path too — walkWhere returns it unchanged.)
+  const hasOperator = keys.some((k) => RELATION_FILTER_OPERATORS.has(k));
+  if (!hasOperator) {
+    return walkWhere(config, targetModel, obj, counter);
+  }
+
+  // Operator-wrapped shape: walk only operator-keyed branches.
   let out: Record<string, unknown> | undefined;
-  for (const op of Object.keys(obj)) {
+  for (const op of keys) {
     const inner = obj[op];
     if (RELATION_FILTER_OPERATORS.has(op)) {
       const transformed = walkWhere(config, targetModel, inner, counter);
