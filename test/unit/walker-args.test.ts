@@ -216,9 +216,9 @@ describe('relation filters', () => {
     const { args, converted } = walk('Post', 'findFirst', {
       where: { author: { id: UUID_A } },
     });
-    expect(
-      (args as { where: { author: { id: Uint8Array } } }).where.author.id,
-    ).toBeInstanceOf(Uint8Array);
+    expect((args as { where: { author: { id: Uint8Array } } }).where.author.id).toBeInstanceOf(
+      Uint8Array,
+    );
     expect(converted).toBe(1);
   });
 
@@ -240,9 +240,7 @@ describe('relation filters', () => {
     const { args, converted } = walk('Post', 'findFirst', {
       where: { author: { id: UUID_A, name: 'Alice' } },
     });
-    const inner = (
-      args as { where: { author: { id: Uint8Array; name: string } } }
-    ).where.author;
+    const inner = (args as { where: { author: { id: Uint8Array; name: string } } }).where.author;
     expect(inner.id).toBeInstanceOf(Uint8Array);
     expect(inner.name).toBe('Alice');
     expect(converted).toBe(1);
