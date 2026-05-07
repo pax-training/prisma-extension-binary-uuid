@@ -6,7 +6,7 @@ CLI: register to-many back-references as relations
 
 The `init` CLI builds a registry of relations the runtime walker uses
 to recurse into nested writes. Previously, only fields with the
-explicit `@relation` attribute (the *owning* side, where the FK lives)
+explicit `@relation` attribute (the _owning_ side, where the FK lives)
 were registered. **Virtual back-references** — typically `Model[]`
 to-many lists, occasionally optional `Model?` singles — were silently
 dropped because Prisma puts the `@relation` block on the other side
@@ -43,7 +43,7 @@ prisma.usersRoles.create({
 the call with:
 
 > Invalid value for argument `id`: Could not convert from `base64
-> encoded bytes` to `PrismaValue::Bytes`. Expected base64 String.
+encoded bytes` to `PrismaValue::Bytes`. Expected base64 String.
 
 The parser now does a two-pass scan: it first collects every model
 name in the schema, then on the field pass it treats any field whose
