@@ -46,6 +46,23 @@ const RELATION_RE = /@relation\b/;
 
 export function parseSchema(source: string): ParsedSchema {
   const lines = source.split(/\r?\n/);
+
+  // Two-pass parse: first collect every model name so we can recognise
+  // back-reference relation fields (to-many lists or single-side fields that
+  // have no `@relation` attribute because the FK is on the other side).
+  // Without this, a field like `permissions UsersRolePermissions[]` on
+  // `UsersRoles` would never be registered as a relation, and nested writes
+  // (`{ permissions: { create: [...] } }`) would slip past the walker with
+  // their UUID strings unconverted.
+  const modelNames = new Set<string>();
+  for (const line of lines) {
+    const stripped = stripComments(line).trim();
+    const m = MODEL_OPEN_RE.exec(stripped);
+    if (m !== null) {
+      modelNames.add(m[1]!);
+    }
+  }
+
   const models: ParsedModel[] = [];
 
   let currentModel: string | null = null;
@@ -90,20 +107,24 @@ export function parseSchema(source: string): ParsedSchema {
     const dbType = dbMatch?.[1];
     const isBinary16 = dbType === 'Binary(16)';
     const isChar36 = dbType === 'Char(36)';
-    const isRelation = RELATION_RE.test(attrs);
+    const hasRelationAttr = RELATION_RE.test(attrs);
     const isUuidCandidate = (type === 'Bytes' && isBinary16) || (type === 'String' && isChar36);
 
     // Detect @default(uuid()) / @default(uuid(7))
     const hasUuidDefault = /@default\s*\(\s*uuid\s*\(\s*\d*\s*\)\s*\)/.test(attrs);
 
-    // If it's a relation scalar field (e.g., `authorId String`), its `type` is
-    // scalar and `attrs` doesn't contain @relation. If it's the *relation*
-    // field itself (e.g., `author User @relation(...)`), its type is a model
-    // name and attrs contains @relation.
-    let relationTargetModel: string | undefined;
-    if (isRelation) {
-      relationTargetModel = type;
-    }
+    // A field is a relation when (a) it has the explicit `@relation` attribute
+    // — the owning side, with the FK declared in `fields:` — OR (b) its type
+    // is the name of another model declared in this schema and it has no
+    // `@db.*` scalar mapping. Case (b) covers virtual back-references
+    // (typically `Model[]` lists, occasionally optional `Model?` singles)
+    // where Prisma infers the relation purely from the type. UUID candidates
+    // are scalar `Bytes`/`String` fields and never count as relations even if
+    // their column type happens to be `Binary(16)` / `Char(36)`.
+    const typeIsModel = modelNames.has(type);
+    const isRelation =
+      !isUuidCandidate && (hasRelationAttr || (typeIsModel && dbType === undefined));
+    const relationTargetModel = isRelation ? type : undefined;
 
     currentFields.push({
       name,

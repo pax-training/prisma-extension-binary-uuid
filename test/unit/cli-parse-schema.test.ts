@@ -88,6 +88,61 @@ describe('parseSchema', () => {
     expect(posts.isList).toBe(true);
   });
 
+  test('list back-references are recognised as relations even without @relation', () => {
+    // The owning side declares `@relation(fields: [...], references: [...])`.
+    // The back-reference (`posts Post[]`) has no `@relation` attribute because
+    // the FK is on the other model. The walker still needs to see it as a
+    // relation so nested writes like `{ posts: { create: [...] } }` recurse
+    // into the target model and convert UUID strings on inner fields.
+    const schema = parseSchema(SCHEMA);
+    const user = schema.modelByName.get('User')!;
+    const posts = user.fields.find((f) => f.name === 'posts')!;
+    expect(posts.isRelation).toBe(true);
+    expect(posts.relationTargetModel).toBe('Post');
+    const company = schema.modelByName.get('Company')!;
+    const users = company.fields.find((f) => f.name === 'users')!;
+    expect(users.isRelation).toBe(true);
+    expect(users.relationTargetModel).toBe('User');
+  });
+
+  test('optional single back-reference (Model?) without @relation is a relation', () => {
+    const optionalBackref = `
+model Profile {
+  id     String @id @db.Char(36)
+  userId String @unique @db.Char(36)
+  user   User   @relation(fields: [userId], references: [id])
+}
+model User {
+  id      String   @id @db.Char(36)
+  profile Profile?
+}
+`;
+    const parsed = parseSchema(optionalBackref);
+    const user = parsed.modelByName.get('User')!;
+    const profile = user.fields.find((f) => f.name === 'profile')!;
+    expect(profile.isRelation).toBe(true);
+    expect(profile.relationTargetModel).toBe('Profile');
+  });
+
+  test('UUID-candidate scalar fields are never reclassified as relations', () => {
+    // A `Bytes @db.Binary(16)` column whose name happens to clash with a
+    // model name in the schema must remain a UUID scalar, not a relation.
+    const collidingNames = `
+model Tenant {
+  id String @id @db.Char(36)
+}
+model Doc {
+  id     String @id @db.Char(36)
+  Tenant Bytes  @db.Binary(16)
+}
+`;
+    const parsed = parseSchema(collidingNames);
+    const doc = parsed.modelByName.get('Doc')!;
+    const field = doc.fields.find((f) => f.name === 'Tenant')!;
+    expect(field.isRelation).toBe(false);
+    expect(field.isUuidCandidate).toBe(true);
+  });
+
   test('ignores non-UUID scalar fields', () => {
     const schema = parseSchema(SCHEMA);
     const analytics = schema.modelByName.get('Analytics')!;
@@ -154,6 +209,10 @@ describe('buildRegistry', () => {
 
     expect(config.relations!['User']?.['company']).toBe('Company');
     expect(config.relations!['Post']?.['author']).toBe('User');
+    // Back-references (no @relation attribute) are now registered too —
+    // required for nested-write walkers to recurse into to-many writes.
+    expect(config.relations!['User']?.['posts']).toBe('Post');
+    expect(config.relations!['Company']?.['users']).toBe('User');
 
     expect(stats.models).toBe(3);
     expect(stats.uuidFields).toBe(5);
