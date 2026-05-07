@@ -1,5 +1,108 @@
 # Changelog
 
+## 1.0.3
+
+### Patch Changes
+
+- d62f24f: CLI: register to-many back-references as relations
+
+  The `init` CLI builds a registry of relations the runtime walker uses
+  to recurse into nested writes. Previously, only fields with the
+  explicit `@relation` attribute (the _owning_ side, where the FK lives)
+  were registered. **Virtual back-references** — typically `Model[]`
+  to-many lists, occasionally optional `Model?` singles — were silently
+  dropped because Prisma puts the `@relation` block on the other side
+  of the relationship, not on the back-ref.
+
+  Concretely:
+
+  ```prisma
+  model UsersRoles {
+    id          Bytes                  @id @db.Binary(16)
+    permissions UsersRolePermissions[] // ← back-ref, no @relation here
+  }
+
+  model UsersRolePermissions {
+    id     Bytes      @id @db.Binary(16)
+    roleId Bytes      @db.Binary(16)
+    role   UsersRoles @relation(fields: [roleId], references: [id])
+  }
+  ```
+
+  The owning `UsersRolePermissions.role` was registered. The back-ref
+  `UsersRoles.permissions` was not. So a perfectly normal nested write —
+
+  ```ts
+  prisma.usersRoles.create({
+    data: {
+      id: randomUUID(),
+      permissions: { create: [{ id: randomUUID(), permission: '...' }] },
+    },
+  });
+  ```
+
+  — never had the inner `id` strings converted, and Prisma 7 rejected
+  the call with:
+
+  > Invalid value for argument `id`: Could not convert from `base64
+encoded bytes` to `PrismaValue::Bytes`. Expected base64 String.
+
+  The parser now does a two-pass scan: it first collects every model
+  name in the schema, then on the field pass it treats any field whose
+  type matches a model name AND has no `@db.*` mapping as a relation,
+  even when no `@relation` attribute is present. UUID-candidate scalar
+  fields (`Bytes @db.Binary(16)` / `String @db.Char(36)`) are excluded
+  from the heuristic, so a column that happens to share a name with a
+  model can never be reclassified as a relation.
+
+  Three new tests cover:
+  - to-many back-references (`User.posts`, `Company.users`)
+  - optional single back-references (`User.profile`)
+  - name-collision safety (a `Tenant Bytes @db.Binary(16)` UUID column
+    in a schema that also declares a `model Tenant` stays a UUID scalar)
+
+  Re-running `prisma-extension-binary-uuid init` after upgrading will
+  emit the additional relation entries; runtime nested writes through
+  back-references now convert as expected.
+
+- d62f24f: Walk into bare to-one relation `where` shorthand
+
+  `walkRelationFilter` previously only recursed into the operator-wrapped
+  relation-filter shape (`some` / `every` / `none` / `is` / `isNot`). The
+  **bare to-one shorthand** Prisma also accepts —
+
+  ```ts
+  prisma.post.findFirst({
+    where: { author: { id: '550e8400-...' } },
+  });
+  ```
+
+  — skipped the converter entirely because none of the inner keys are in
+  the operator set, so the inner UUID string reached the engine
+  unconverted and Prisma 7 rejected it with:
+
+  > Could not convert from `base64 encoded bytes` to `PrismaValue::Bytes`.
+  > Expected base64 String.
+
+  The walker now detects the operator-less shape — if no key in the value
+  is one of the relation-filter operators, the whole object is treated as
+  a direct `where` against the related model and recurses through
+  `walkWhere`. This covers any depth of bare-to-one chaining
+  (`where: { a: { b: { c: { uuidField: ... } } } }`) since each layer hits
+  the same branch in turn.
+
+  Mixed shapes (`{ is: {...}, id: '...' }`) aren't valid Prisma input so
+  no special handling is needed — the operator branch wins as soon as one
+  operator is present.
+
+  Six new tests cover:
+  - bare to-one with a single UUID field
+  - bare to-one with a UUID FK that pivots further
+  - bare to-one alongside a non-UUID scalar (string left untouched)
+  - bare to-one combined with an operator-wrapped sibling on the same `where`
+  - empty bare to-one object (`{ author: {} }`) — no-op
+  - the existing `is`/`isNot` operator path (regression coverage)
+
 ## 1.0.2
 
 ### Patch Changes
