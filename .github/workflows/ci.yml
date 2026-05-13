@@ -96,7 +96,7 @@ jobs:
           - mariadb:10.11
           - mariadb:11
         prisma:
-          - '7.7.0'
+          - '7.8.0'
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
@@ -135,7 +135,7 @@ jobs:
         prisma:
           - '5.22.0' # latest 5.x
           - '6.19.3' # latest 6.x
-          - '7.7.0' # latest 7.x
+          - '7.8.0' # latest 7.x
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6

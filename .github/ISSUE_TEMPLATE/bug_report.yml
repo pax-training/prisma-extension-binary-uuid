@@ -20,7 +20,7 @@ body:
     id: prisma-version
     attributes:
       label: Prisma Client version
-      placeholder: 'e.g. @prisma/client@7.7.0'
+      placeholder: 'e.g. @prisma/client@7.8.0'
     validations:
       required: true
 
