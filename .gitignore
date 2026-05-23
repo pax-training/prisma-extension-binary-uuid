@@ -37,3 +37,6 @@ test/matrix/results/
 
 # graphify knowledge-graph outputs (local-only)
 graphify-out/
+
+# Local scratch — never commit
+migrate-sql-e2e.mts
