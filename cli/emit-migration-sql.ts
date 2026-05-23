@@ -67,26 +67,42 @@ export function emitMigrationSql(schema: ParsedSchema, options: MigrationSqlOpti
     );
     if (uuidFields.length === 0) continue;
 
-    const tableName = model.name; // Prisma's default mapping: model name = table name unless @@map
-    lines.push(`-- Model: ${model.name}`);
+    // Resolve the database-side identifiers. Prisma's `@@map("...")` and
+    // `@map("...")` rename the underlying table/column; the schema-side names
+    // (`model.name`, `field.name`) stay as the application sees them. Raw SQL
+    // must target the database-side names — using the schema names would
+    // either error with "Unknown table/column" or, worse, mutate a coincidentally
+    // similarly-named table.
+    const tableName = model.dbName ?? model.name;
+    // Header comment shows both names when they differ so the operator can
+    // grep either form back to the source schema entry.
+    const modelLabel = model.dbName !== undefined ? `${model.name} -> ${model.dbName}` : model.name;
+    lines.push(`-- Model: ${modelLabel}`);
     for (const field of uuidFields) {
+      const columnName = field.dbName ?? field.name;
       if (field.dbType === 'Binary(16)') {
         // Already binary — skip.
-        lines.push(`-- skipping ${tableName}.${field.name} (already BINARY(16))`);
+        lines.push(`-- skipping ${tableName}.${columnName} (already BINARY(16))`);
         continue;
       }
-      const nullable = field.isNullable ? ' NULL' : ' NOT NULL';
+      const finalNullability = field.isNullable ? ' NULL' : ' NOT NULL';
+      // ADD COLUMN is always NULL — the temp column gets populated by the
+      // UPDATE that follows. If the script is interrupted between ADD and
+      // UPDATE, the rows are obviously-bad NULLs that can be detected and
+      // re-run, instead of MySQL's implicit zero-byte default for NOT NULL
+      // BINARY columns which would silently masquerade as valid data. The
+      // final CHANGE COLUMN below enforces the real nullability constraint.
       lines.push(
-        `ALTER TABLE \`${tableName}\` ADD COLUMN \`${field.name}__bin\` BINARY(16)${nullable} AFTER \`${field.name}\`;`,
+        `ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}__bin\` BINARY(16) NULL AFTER \`${columnName}\`;`,
       );
       lines.push(
-        `UPDATE \`${tableName}\` SET \`${field.name}__bin\` = ${toBinExpr(
-          `\`${field.name}\``,
-        )} WHERE \`${field.name}\` IS NOT NULL;`,
+        `UPDATE \`${tableName}\` SET \`${columnName}__bin\` = ${toBinExpr(
+          `\`${columnName}\``,
+        )} WHERE \`${columnName}\` IS NOT NULL;`,
       );
-      lines.push(`ALTER TABLE \`${tableName}\` DROP COLUMN \`${field.name}\`;`);
+      lines.push(`ALTER TABLE \`${tableName}\` DROP COLUMN \`${columnName}\`;`);
       lines.push(
-        `ALTER TABLE \`${tableName}\` CHANGE COLUMN \`${field.name}__bin\` \`${field.name}\` BINARY(16)${nullable};`,
+        `ALTER TABLE \`${tableName}\` CHANGE COLUMN \`${columnName}__bin\` \`${columnName}\` BINARY(16)${finalNullability};`,
       );
     }
     lines.push('');

@@ -164,6 +164,42 @@ model User {
     expect(u.fields.map((f) => f.name).sort()).toEqual(['email', 'id']);
   });
 
+  test('captures @@map as model.dbName', () => {
+    const parsed = parseSchema(`
+model User {
+  id String @id @db.Char(36)
+  @@map("users")
+}
+`);
+    expect(parsed.modelByName.get('User')!.dbName).toBe('users');
+  });
+
+  test('captures @map as field.dbName', () => {
+    const parsed = parseSchema(`
+model User {
+  id        String  @id @db.Char(36) @map("user_id")
+  companyId String? @db.Char(36) @map("company_id")
+  email     String  @unique
+}
+`);
+    const u = parsed.modelByName.get('User')!;
+    expect(u.fields.find((f) => f.name === 'id')!.dbName).toBe('user_id');
+    expect(u.fields.find((f) => f.name === 'companyId')!.dbName).toBe('company_id');
+    // Unmapped fields stay undefined; emitters fall back to `name`.
+    expect(u.fields.find((f) => f.name === 'email')!.dbName).toBeUndefined();
+  });
+
+  test('dbName is undefined when @@map / @map are absent', () => {
+    const parsed = parseSchema(`
+model Order {
+  id String @id @db.Char(36)
+}
+`);
+    const m = parsed.modelByName.get('Order')!;
+    expect(m.dbName).toBeUndefined();
+    expect(m.fields[0]!.dbName).toBeUndefined();
+  });
+
   test("skips lines that don't match field regex (comments, blanks)", () => {
     const schemaWithJunk = `
 model User {
@@ -281,10 +317,103 @@ describe('emitMigrationSql', () => {
   test('emits ALTER TABLE statements for CHAR(36) columns', () => {
     const schema = parseSchema(SCHEMA);
     const sql = emitMigrationSql(schema);
-    expect(sql).toContain('ALTER TABLE `User` ADD COLUMN `id__bin` BINARY(16) NOT NULL');
+    // Temp column is always NULL on ADD; final nullability comes from the
+    // CHANGE COLUMN after UPDATE has populated it.
+    expect(sql).toContain('ALTER TABLE `User` ADD COLUMN `id__bin` BINARY(16) NULL AFTER `id`');
+    expect(sql).toContain(
+      'ALTER TABLE `User` CHANGE COLUMN `id__bin` `id` BINARY(16) NOT NULL',
+    );
     expect(sql).toContain('UPDATE `User` SET `id__bin` = UUID_TO_BIN(`id`, 1)');
     expect(sql).toContain('ALTER TABLE `User` DROP COLUMN `id`');
     expect(sql).toContain('FOREIGN_KEY_CHECKS = 0');
+  });
+
+  test('temp __bin column is always NULL on ADD, even for NOT NULL fields', () => {
+    // Crash-safety property: if the migration is interrupted between ADD and
+    // UPDATE, the rows must contain obviously-bad NULLs rather than the
+    // implicit zero-byte default that MySQL would supply for `BINARY NOT NULL`
+    // — zeros look like valid UUIDs and would silently survive a half-applied
+    // migration. The final CHANGE COLUMN reasserts the original nullability.
+    const schema = parseSchema(`
+model User {
+  id   String  @id @db.Char(36)
+  alt  String  @db.Char(36)
+  opt  String? @db.Char(36)
+}
+`);
+    const sql = emitMigrationSql(schema);
+    const addLines = sql.split('\n').filter((l) => /ADD COLUMN .*__bin/.test(l));
+    expect(addLines.length).toBe(3);
+    for (const line of addLines) {
+      expect(line).toContain('BINARY(16) NULL AFTER');
+      expect(line).not.toContain('BINARY(16) NOT NULL');
+    }
+    // Final NOT NULL is reasserted on the non-nullable fields only.
+    expect(sql).toContain('CHANGE COLUMN `id__bin` `id` BINARY(16) NOT NULL');
+    expect(sql).toContain('CHANGE COLUMN `alt__bin` `alt` BINARY(16) NOT NULL');
+    expect(sql).toContain('CHANGE COLUMN `opt__bin` `opt` BINARY(16) NULL');
+  });
+
+  test('uses @@map table name and @map column name in emitted SQL', () => {
+    // @@map renames the table; @map renames the column. The runtime walker
+    // operates on Prisma names, but raw migration SQL must target the
+    // database-side identifiers or it errors with "Unknown table/column" —
+    // or, worse, mutates a coincidentally similarly-named table.
+    const mapped = parseSchema(`
+model User {
+  id        String  @id @db.Char(36) @map("user_id")
+  companyId String? @db.Char(36) @map("company_id")
+  email     String  @unique
+  @@map("users")
+}
+`);
+    const sql = emitMigrationSql(mapped);
+
+    // Table name is the @@map target, not the model name.
+    expect(sql).toContain(
+      'ALTER TABLE `users` ADD COLUMN `user_id__bin` BINARY(16) NULL AFTER `user_id`',
+    );
+    expect(sql).toContain('UPDATE `users` SET `user_id__bin` = UUID_TO_BIN(`user_id`, 1)');
+    expect(sql).toContain('ALTER TABLE `users` DROP COLUMN `user_id`');
+    expect(sql).toContain(
+      'ALTER TABLE `users` CHANGE COLUMN `user_id__bin` `user_id` BINARY(16) NOT NULL',
+    );
+    // Nullable @map'd field uses the DB column name too.
+    expect(sql).toContain('`company_id__bin` BINARY(16) NULL');
+
+    // The Prisma-side names must never appear as identifiers in a DDL
+    // statement (only in the `-- Model:` comment header for traceability).
+    const ddlLines = sql.split('\n').filter((l) => /^\s*(ALTER|UPDATE)/.test(l));
+    for (const line of ddlLines) {
+      expect(line).not.toContain('`User`');
+      expect(line).not.toContain('`id`');
+      expect(line).not.toContain('`companyId`');
+    }
+  });
+
+  test('header comment includes both names when @@map is present', () => {
+    const mapped = parseSchema(`
+model AuditLog {
+  id String @id @db.Char(36)
+  @@map("audit_logs")
+}
+`);
+    const sql = emitMigrationSql(mapped);
+    expect(sql).toContain('-- Model: AuditLog -> audit_logs');
+  });
+
+  test('falls back to schema-side name when @map / @@map are absent', () => {
+    // Regression guard: the schema-name path must still work for the common
+    // case where no mapping attributes are present.
+    const unmapped = parseSchema(`
+model Order {
+  id String @id @db.Char(36)
+}
+`);
+    const sql = emitMigrationSql(unmapped);
+    expect(sql).toContain('-- Model: Order');
+    expect(sql).not.toContain('-> ');
+    expect(sql).toContain('ALTER TABLE `Order` ADD COLUMN `id__bin`');
   });
 
   test('skips already-Binary(16) columns', () => {
@@ -301,10 +430,16 @@ describe('emitMigrationSql', () => {
     expect(sql).not.toContain('UUID_TO_BIN(`id`, 1)');
   });
 
-  test('handles nullable fields', () => {
+  test('honors nullability on the final CHANGE COLUMN', () => {
+    // ADD COLUMN is always NULL (see crash-safety test above). The original
+    // nullability is restored when the temp column is renamed into place.
     const schema = parseSchema(SCHEMA);
     const sql = emitMigrationSql(schema);
-    expect(sql).toContain('`companyId__bin` BINARY(16) NULL');
-    expect(sql).toContain('`id__bin` BINARY(16) NOT NULL');
+    expect(sql).toContain(
+      'ALTER TABLE `User` CHANGE COLUMN `companyId__bin` `companyId` BINARY(16) NULL',
+    );
+    expect(sql).toContain(
+      'ALTER TABLE `User` CHANGE COLUMN `id__bin` `id` BINARY(16) NOT NULL',
+    );
   });
 });

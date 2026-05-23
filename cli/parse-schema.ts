@@ -27,11 +27,17 @@ export interface ParsedField {
   readonly isRelation: boolean;
   readonly relationTargetModel: string | undefined;
   readonly hasUuidDefault: boolean;
+  // Database column name from `@map("...")`. Undefined when the field is not
+  // remapped; callers that emit SQL must fall back to `name` in that case.
+  readonly dbName: string | undefined;
 }
 
 export interface ParsedModel {
   readonly name: string;
   readonly fields: readonly ParsedField[];
+  // Database table name from `@@map("...")`. Undefined when the model is not
+  // remapped; callers that emit SQL must fall back to `name` in that case.
+  readonly dbName: string | undefined;
 }
 
 export interface ParsedSchema {
@@ -43,6 +49,12 @@ const MODEL_OPEN_RE = /^model\s+(\w+)\s*\{/;
 const FIELD_RE = /^\s*(?<name>\w+)\s+(?<type>\w+)(?<modifier>\?|\[\])?\s*(?<attrs>.*)$/;
 const DB_TYPE_RE = /@db\.(\w+(?:\([^)]+\))?)/;
 const RELATION_RE = /@relation\b/;
+// `@@map("table_name")` at model scope and `@map("col_name")` at field scope
+// rename the underlying database identifiers. Prisma's runtime continues to
+// use the schema-side names — but raw SQL emitted by `migrate-sql` must use
+// the database-side names or it will target identifiers that don't exist.
+const MODEL_MAP_RE = /^@@map\s*\(\s*"([^"]+)"\s*\)/;
+const FIELD_MAP_RE = /@map\s*\(\s*"([^"]+)"\s*\)/;
 
 export function parseSchema(source: string): ParsedSchema {
   const lines = source.split(/\r?\n/);
@@ -66,6 +78,7 @@ export function parseSchema(source: string): ParsedSchema {
   const models: ParsedModel[] = [];
 
   let currentModel: string | null = null;
+  let currentModelDbName: string | undefined = undefined;
   let currentFields: ParsedField[] = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -77,6 +90,7 @@ export function parseSchema(source: string): ParsedSchema {
       const m = MODEL_OPEN_RE.exec(stripped);
       if (m !== null) {
         currentModel = m[1]!;
+        currentModelDbName = undefined;
         currentFields = [];
       }
       continue;
@@ -84,14 +98,22 @@ export function parseSchema(source: string): ParsedSchema {
 
     // Inside a model block.
     if (stripped === '}') {
-      models.push({ name: currentModel, fields: currentFields });
+      models.push({ name: currentModel, fields: currentFields, dbName: currentModelDbName });
       currentModel = null;
+      currentModelDbName = undefined;
       currentFields = [];
       continue;
     }
 
-    // Skip `@@` model-level attributes.
-    if (stripped.startsWith('@@')) continue;
+    // `@@`-prefixed lines are model-level attributes, not fields. We only need
+    // `@@map("...")` (the database table name); other `@@`-attrs are skipped.
+    if (stripped.startsWith('@@')) {
+      const mm = MODEL_MAP_RE.exec(stripped);
+      if (mm !== null) {
+        currentModelDbName = mm[1]!;
+      }
+      continue;
+    }
 
     const fm = FIELD_RE.exec(stripped);
     if (fm?.groups === undefined) continue;
@@ -112,6 +134,10 @@ export function parseSchema(source: string): ParsedSchema {
 
     // Detect @default(uuid()) / @default(uuid(7))
     const hasUuidDefault = /@default\s*\(\s*uuid\s*\(\s*\d*\s*\)\s*\)/.test(attrs);
+
+    // Extract `@map("col_name")` so SQL emission can target the real column.
+    const fieldMapMatch = FIELD_MAP_RE.exec(attrs);
+    const dbName = fieldMapMatch?.[1];
 
     // A field is a relation when (a) it has the explicit `@relation` attribute
     // — the owning side, with the FK declared in `fields:` — OR (b) its type
@@ -137,6 +163,7 @@ export function parseSchema(source: string): ParsedSchema {
       isRelation,
       relationTargetModel,
       hasUuidDefault,
+      dbName,
     });
   }
 
