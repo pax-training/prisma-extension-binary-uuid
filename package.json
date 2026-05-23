@@ -86,7 +86,12 @@
     "size": "size-limit",
     "prepublishOnly": "pnpm run clean && pnpm run build && pnpm run typecheck && pnpm run test:unit",
     "release": "changeset publish",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}": "prettier --write",
+    "*.{ts,tsx}": "eslint --max-warnings 0"
   },
   "peerDependencies": {
     "@prisma/client": ">=5.0.0 <8.0.0"
@@ -108,6 +113,8 @@
     "eslint": "^10.3.0",
     "eslint-plugin-import": "^2.31.0",
     "fast-check": "^4.7.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
     "mariadb": "^3.5.2",
     "mitata": "^1.0.16",
     "prettier": "^3.4.2",

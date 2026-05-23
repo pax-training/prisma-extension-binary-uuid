@@ -1,0 +1,23 @@
+# Mirror the fast-path checks GitHub Actions runs on the CI workflow so a push
+# can't reach `main` (or any branch) in a state that would turn the workflow
+# red. Integration tests are skipped here — they require a live MySQL/MariaDB
+# container, take ~40s, and run in CI under a dedicated job. Same applies to
+# benchmarks and the Prisma compat matrix.
+#
+# To bypass intentionally (e.g. WIP push to a personal branch): `git push --no-verify`.
+set -e
+
+echo "[pre-push] prettier --check"
+pnpm run -s format
+
+echo "[pre-push] eslint"
+pnpm run -s lint
+
+echo "[pre-push] typecheck"
+pnpm run -s typecheck
+
+echo "[pre-push] unit + property tests"
+pnpm run -s test:unit
+pnpm run -s test:property
+
+echo "[pre-push] ok"
