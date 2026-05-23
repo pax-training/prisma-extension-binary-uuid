@@ -320,9 +320,7 @@ describe('emitMigrationSql', () => {
     // Temp column is always NULL on ADD; final nullability comes from the
     // CHANGE COLUMN after UPDATE has populated it.
     expect(sql).toContain('ALTER TABLE `User` ADD COLUMN `id__bin` BINARY(16) NULL AFTER `id`');
-    expect(sql).toContain(
-      'ALTER TABLE `User` CHANGE COLUMN `id__bin` `id` BINARY(16) NOT NULL',
-    );
+    expect(sql).toContain('ALTER TABLE `User` CHANGE COLUMN `id__bin` `id` BINARY(16) NOT NULL');
     expect(sql).toContain('UPDATE `User` SET `id__bin` = UUID_TO_BIN(`id`, 1)');
     expect(sql).toContain('ALTER TABLE `User` DROP COLUMN `id`');
     expect(sql).toContain('FOREIGN_KEY_CHECKS = 0');
@@ -438,8 +436,6 @@ model Order {
     expect(sql).toContain(
       'ALTER TABLE `User` CHANGE COLUMN `companyId__bin` `companyId` BINARY(16) NULL',
     );
-    expect(sql).toContain(
-      'ALTER TABLE `User` CHANGE COLUMN `id__bin` `id` BINARY(16) NOT NULL',
-    );
+    expect(sql).toContain('ALTER TABLE `User` CHANGE COLUMN `id__bin` `id` BINARY(16) NOT NULL');
   });
 });
