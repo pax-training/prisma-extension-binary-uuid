@@ -34,3 +34,6 @@ test/benchmark/baseline.tmp.json
 
 # Matrix output
 test/matrix/results/
+
+# graphify knowledge-graph outputs (local-only)
+graphify-out/
