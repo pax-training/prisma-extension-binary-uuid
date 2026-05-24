@@ -28,7 +28,7 @@ export function newUidV4(): Uint8Array {
 export function newUidV4Raw(): Uint8Array {
   const bytes = new Uint8Array(16);
   // `globalThis.crypto` is the Web Crypto API; available in every supported
-  // Node version (20.19+) and in Edge / browser runtimes.
+  // Node version (22.13+) and in Edge / browser runtimes.
   globalThis.crypto.getRandomValues(bytes);
   // Set version to 4 (high nibble of byte 6).
   bytes[6] = (bytes[6]! & 0x0f) | 0x40;

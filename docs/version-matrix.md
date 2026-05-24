@@ -46,15 +46,15 @@ TEST_DB_IMAGE=mysql:5.7 TEST_DB_PLATFORM=linux/amd64 pnpm test:integration
 
 | Node   | Status |
 | ------ | :----: |
-| 20.19+ |   ✅   |
-| 22.12+ |   ✅   |
+| 22.13+ |   ✅   |
 | 24     |   ✅   |
 
-Tracks Prisma 7's `engines` field (`^20.19 || ^22.12 || >=24`). Node 18 is
-not supported because Prisma 7's preinstall fails on it; users still on
-Node 18 should pin to `@prisma/client` 6.x and consume this extension via
-the same Prisma version (the `prisma-compat` CI job verifies the extension
-works against 6.x).
+Minimum Node is 22.13. Node 20 reached end-of-life on 2026-04-30 and was
+dropped in v1.1.0; the development toolchain (pnpm 11) already required
+22.13+, so the published `engines.node` now matches what the project
+actually needs. Users still on Node 20 should pin to v1.0.x, which
+remains installable but unmaintained. Node 18 has never been supported —
+Prisma 7's preinstall fails on it.
 
 ## Cloud providers
 

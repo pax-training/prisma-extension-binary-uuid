@@ -57,7 +57,7 @@
     "CHANGELOG.md"
   ],
   "engines": {
-    "node": ">=20.19"
+    "node": ">=22.13"
   },
   "scripts": {
     "build": "tsup",

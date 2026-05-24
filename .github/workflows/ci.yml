@@ -49,8 +49,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Track Prisma 7's engines field (^20.19 || ^22.12 || >=24).
-        node: [20, 22, 24]
+        # Node 20 was dropped in 1.1.0: it reached EOL on 2026-04-30 and the
+        # project's pinned packageManager (pnpm 11.x) already requires Node
+        # >= 22.13. `engines.node` in package.json reflects that floor.
+        node: [22, 24]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
